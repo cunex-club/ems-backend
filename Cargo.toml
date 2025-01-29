@@ -34,4 +34,4 @@ sqlx = { version = "0.8.3", features = [
     "runtime-tokio-native-tls",
     "uuid",
 ] }
-# mysk-lib = { git = "https://github.com/suankularb-wittayalai-school/mysk-api.git", branch = "main" }
+mysk-lib = { path = "./dep/mysk-api/mysk-lib" }
