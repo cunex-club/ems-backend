@@ -15,9 +15,9 @@ use parking_lot::Mutex;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{collections::HashSet, env, io, process};
 
-use lib::common::config::Config;
-
-mod lib;
+mod common;
+mod models;
+use crate::common::config::Config;
 
 use mysk_lib::prelude::*;
 
