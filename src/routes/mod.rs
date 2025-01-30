@@ -1,6 +1,6 @@
 use actix_web::web::{scope, to, ServiceConfig};
 
-// pub mod auth;
+pub mod auth;
 pub mod health;
 pub mod not_found;
 // pub mod v1;
