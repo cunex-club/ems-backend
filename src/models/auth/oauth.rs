@@ -30,6 +30,7 @@ pub struct GoogleUserResult {
     pub name: String,
     pub given_name: String,
     pub family_name: String,
+    pub picture: String,
 }
 
 impl GoogleUserResult {
@@ -41,6 +42,7 @@ impl GoogleUserResult {
             name: payload.name,
             given_name: payload.given_name,
             family_name: payload.family_name,
+            picture: payload.picture,
         }
     }
 }
@@ -65,6 +67,7 @@ pub struct TokenPayload {
     _iss: String,
     name: String,
     sub: String,
+    picture: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

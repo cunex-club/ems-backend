@@ -734,6 +734,8 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "mysk-lib",
+ "mysk-lib-derives",
+ "mysk-lib-macros",
  "parking_lot",
  "rand",
  "reqwest",

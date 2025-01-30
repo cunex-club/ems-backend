@@ -1,4 +1,4 @@
-use crate::AppState;
+use crate::{models::user::User, AppState};
 use actix_web::{
     cookie::{time::Duration as ActixWebDuration, Cookie},
     post,
@@ -50,7 +50,14 @@ async fn gsi_handler(data: Data<AppState>, query: Json<OAuthRequest>) -> Result<
     };
 
     let google_user = GoogleUserResult::from_token_payload(google_id_data);
-    let user_id = User::get_by_email(&data.db, &google_user.email).await?.id;
+    let user_id = match User::get_by_email(&data.db, &google_user.email).await? {
+        Some(user_id) => user_id,
+        None => {
+            User::create_user_from_google(&data.db, google_user)
+                .await?
+                .id
+        }
+    };
 
     let jwt_secret = data.env.token_secret.clone();
     let now = Utc::now();
