@@ -1,50 +1,82 @@
-use crate::{models::user::User, AppState};
+use crate::{
+    models::auth::oauth::{
+        exchange_oauth_code, generate_oauth_init_url, verify_id_token, GoogleUserResult,
+        TokenClaims,
+    },
+    models::user::User,
+    routes::auth::gsi_login::GoogleTokenResponse,
+    AppState,
+};
 use actix_web::{
     cookie::{time::Duration as ActixWebDuration, Cookie},
-    post,
-    web::{Data, Json},
+    get,
+    web::{Data, Query, Redirect},
     HttpResponse, Responder,
 };
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
-use mysk_lib::{common::response::ResponseType, error::Error, prelude::*};
-use serde::{Deserialize, Serialize};
+use mysk_lib::{common::response::ResponseType, prelude::*};
+use serde::Deserialize;
 
-use crate::models::auth::oauth::{verify_id_token, GoogleUserResult, TokenClaims};
+#[get("/oauth/init")]
+pub async fn oauth_initiator(data: Data<AppState>) -> Result<impl Responder> {
+    let (redirect_url, state) = generate_oauth_init_url(
+        &data.env.google_oauth_client_id,
+        format!("{}/auth/oauth/google", &data.env.root_uri).as_str(),
+    )?;
 
-#[derive(Debug, Deserialize)]
-pub struct OAuthRequest {
-    pub credential: String,
+    {
+        let mut guard = data.oauth_states.lock();
+        let oauth_states = &mut *guard;
+        oauth_states.insert(state.clone());
+    }
+
+    Ok(Redirect::to(redirect_url))
 }
-#[derive(Debug, Serialize)]
-pub struct GoogleTokenResponse {
-    pub access_token: String,
-    pub expires_in: u64,
-    pub token_type: String,
-    pub scope: String,
-    pub id_token: String,
+
+#[derive(Deserialize)]
+struct GoogleOAuthCodeRequest {
+    code: String,
+    state: String,
 }
 
 #[allow(clippy::cast_possible_wrap)]
-#[post("/oauth/gsi")]
-async fn gsi_handler(data: Data<AppState>, query: Json<OAuthRequest>) -> Result<impl Responder> {
-    let id_token: String = query.credential.clone();
+#[get("/oauth/google")]
+pub async fn google_oauth_handler(
+    data: Data<AppState>,
+    request_query: Query<GoogleOAuthCodeRequest>,
+) -> Result<impl Responder> {
+    let code = &request_query.code;
+    let state = &request_query.state;
 
-    if id_token.is_empty() {
-        return Err(Error::InvalidToken(
-            "Invalid token".to_string(),
-            "/auth/oauth/gsi".to_string(),
-        ));
+    {
+        let mut guard = data.oauth_states.lock();
+        let oauth_states = &mut *guard;
+
+        if !oauth_states.contains(state) {
+            return Err(Error::InvalidToken(
+                "OAuth state mismatch".to_string(),
+                "/auth/oauth/google".to_string(),
+            ));
+        }
+
+        oauth_states.remove(state);
     }
 
-    // decode id_token to get google user info with jwt and get access_token and verify it with
-    // google secret
+    let id_token = exchange_oauth_code(
+        code,
+        &data.env.google_oauth_client_id,
+        &data.env.google_oauth_client_secret,
+        format!("{}/auth/oauth/google", &data.env.root_uri).as_str(),
+    )
+    .await?;
+
     let google_id_data = match verify_id_token(&id_token, &data.env).await {
         Ok(data) => data,
         Err(err) => {
             return Err(Error::InvalidToken(
                 err.to_string(),
-                "/auth/oauth/gsi".to_string(),
+                "/auth/oauth/google".to_string(),
             ));
         }
     };
@@ -91,7 +123,7 @@ async fn gsi_handler(data: Data<AppState>, query: Json<OAuthRequest>) -> Result<
                     access_token: token,
                     expires_in: data.env.token_max_age * 60,
                     token_type: "Bearer".to_string(),
-                    scope: "email profile".to_string(),
+                    scope: "openid email profile".to_string(),
                     id_token,
                 },
                 None,
@@ -101,7 +133,7 @@ async fn gsi_handler(data: Data<AppState>, query: Json<OAuthRequest>) -> Result<
         }
         Err(err) => Err(Error::InternalSeverError(
             err.to_string(),
-            "/auth/oauth/gsi".to_string(),
+            "/auth/oauth/google".to_string(),
         )),
     }
 }

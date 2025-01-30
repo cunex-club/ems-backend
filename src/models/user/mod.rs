@@ -38,8 +38,16 @@ impl User {
         })
     }
 
-    pub async fn get_by_email(pool: &PgPool, email: &str) -> Result<Option<Uuid>> {
-        DbUser::get_by_email(pool, email).await
+    pub async fn get_by_email(pool: &PgPool, email: &str) -> Result<Option<Self>> {
+        let user_id = DbUser::get_by_email(pool, email).await?;
+
+        match user_id {
+            Some(user_id) => {
+                let user = Self::get_by_id(pool, user_id).await?;
+                Ok(Some(user))
+            }
+            None => Ok(None),
+        }
     }
 
     pub async fn create_user_from_google(

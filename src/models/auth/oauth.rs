@@ -117,7 +117,7 @@ pub fn generate_oauth_init_url(client_id: &str, redirect_uri: &str) -> Result<(S
         access_type: "online".to_string(),
         state: state.clone(),
         include_granted_scopes: true,
-        hd: "sk.ac.th".to_string(),
+        hd: "chula.ac.th".to_string(),
         #[cfg(debug_assertions)]
         prompt: Some("select_account".to_string()),
         #[cfg(not(debug_assertions))]
