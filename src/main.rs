@@ -17,6 +17,8 @@ use std::{collections::HashSet, env, io, process};
 
 mod common;
 mod models;
+mod routes;
+
 use crate::common::config::Config;
 
 use mysk_lib::prelude::*;
@@ -97,7 +99,7 @@ async fn main() -> io::Result<()> {
             .wrap(Logger::default())
             .wrap(NormalizePath::trim())
             .wrap(cors_middleware)
-        // .configure(routes::config)
+            .configure(routes::config)
     })
     .bind((host, port))
     .map_err(|_| panic!("Unable to bind to address {host}:{port}! Perhaps it is in use?"))
