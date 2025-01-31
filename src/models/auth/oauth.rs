@@ -16,17 +16,11 @@ pub struct TokenClaims {
     pub exp: usize,
 }
 
-#[derive(Deserialize)]
-pub struct OAuthResponse {
-    pub access_token: String,
-    pub id_token: String,
-}
-
 #[derive(Deserialize, Debug)]
 pub struct GoogleUserResult {
-    pub id: String,
+    pub _id: String,
     pub email: String,
-    pub verified_email: bool,
+    pub _verified_email: bool,
     pub name: String,
     pub given_name: String,
     pub family_name: String,
@@ -36,9 +30,9 @@ pub struct GoogleUserResult {
 impl GoogleUserResult {
     pub fn from_token_payload(payload: TokenPayload) -> Self {
         Self {
-            id: payload.sub,
+            _id: payload.sub,
             email: payload.email,
-            verified_email: payload.email_verified,
+            _verified_email: payload.email_verified,
             name: payload.name,
             given_name: payload.given_name,
             family_name: payload.family_name,

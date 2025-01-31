@@ -16,6 +16,7 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{collections::HashSet, env, io, process};
 
 mod common;
+mod extractors;
 mod models;
 mod routes;
 
