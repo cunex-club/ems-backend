@@ -1,8 +1,8 @@
-use crate::models::candidate::db::DbCandidate;
+use crate::models::{candidate::db::DbCandidate, question::Question};
 use async_trait::async_trait;
 use mysk_lib::{
     common::{requests::FetchLevel, string::MultiLangString},
-    models::traits::FetchLevelVariant,
+    models::traits::{FetchLevelVariant, TopLevelGetById},
     permissions::Authorizer,
     prelude::*,
 };
@@ -13,7 +13,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultCandidate {
     pub id: Uuid,
-    // pub question: Question, // TODO: Populate this field with the question
+    pub question: Question,
     pub choice_label: MultiLangString,
     pub title: String,
     pub info_line_1: String,
@@ -42,6 +42,14 @@ impl FetchLevelVariant<DbCandidate> for DefaultCandidate {
                 th: table.choice_label_th,
                 en: Some(table.choice_label_en),
             },
+            question: Question::get_by_id(
+                pool,
+                table.question_id,
+                descendant_fetch_level,
+                Some(&FetchLevel::IdOnly),
+                authorizer,
+            )
+            .await?,
             title: table.title,
             info_line_1: table.info_line_1,
             info_line_2: table.info_line_2,

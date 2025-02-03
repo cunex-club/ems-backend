@@ -5,7 +5,7 @@ use crate::models::candidate::{
     },
 };
 
-use mysk_lib::models::{top_level_variant::TopLevelVariant, traits::TopLevelQuery};
+use mysk_lib::models::top_level_variant::TopLevelVariant;
 
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
