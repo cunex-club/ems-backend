@@ -1,4 +1,4 @@
-use crate::models::{candidate::Candidate, question::db::DbQuestion};
+use crate::models::{candidate::Candidate, election::Election, question::db::DbQuestion};
 use async_trait::async_trait;
 use mysk_lib::{
     common::{requests::FetchLevel, string::MultiLangString},
@@ -13,7 +13,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultQuestion {
     pub id: Uuid,
-    // pub election: Election, // TODO: Implement Election model
+    pub election: Election,
     pub question: MultiLangString,
     pub faculty_code: String,
     pub student_year_start: i64,
@@ -34,7 +34,14 @@ impl FetchLevelVariant<DbQuestion> for DefaultQuestion {
 
         Ok(Self {
             id: table.id,
-            // election_id: table.election_id,
+            election: Election::get_by_id(
+                pool,
+                table.election_id,
+                descendant_fetch_level,
+                Some(&FetchLevel::IdOnly),
+                authorizer,
+            )
+            .await?,
             question: MultiLangString {
                 th: table.question_th,
                 en: Some(table.question_en),
