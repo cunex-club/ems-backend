@@ -13,7 +13,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultQuestion {
     pub id: Uuid,
-    pub election_id: Uuid,
+    // pub election: Election, // TODO: Implement Election model
     pub question: MultiLangString,
     pub faculty_code: String,
     pub student_year_start: i64,
@@ -34,7 +34,7 @@ impl FetchLevelVariant<DbQuestion> for DefaultQuestion {
 
         Ok(Self {
             id: table.id,
-            election_id: table.election_id,
+            // election_id: table.election_id,
             question: MultiLangString {
                 th: table.question_th,
                 en: Some(table.question_en),
