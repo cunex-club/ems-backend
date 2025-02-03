@@ -1,4 +1,4 @@
-use crate::models::{election::db::DbElection, question::Question};
+use crate::models::{election::db::DbElection, project::Project, question::Question};
 use async_trait::async_trait;
 use mysk_lib::{
     common::{requests::FetchLevel, string::MultiLangString},
@@ -13,6 +13,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultElection {
     pub id: Uuid,
+    pub project: Project,
     pub label: String,
     pub name: MultiLangString,
     pub questions: Vec<Question>,
@@ -32,6 +33,14 @@ impl FetchLevelVariant<DbElection> for DefaultElection {
 
         Ok(Self {
             id: table.id,
+            project: Project::get_by_id(
+                pool,
+                table.project_id,
+                descendant_fetch_level,
+                Some(&FetchLevel::IdOnly),
+                authorizer,
+            )
+            .await?,
             label: table.label,
             name: MultiLangString {
                 th: table.name_th,

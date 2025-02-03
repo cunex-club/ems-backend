@@ -38,6 +38,24 @@ impl User {
         })
     }
 
+    pub async fn get_by_ids(pool: &PgPool, ids: Vec<Uuid>) -> Result<Vec<Self>> {
+        let users = DbUser::get_by_ids(pool, ids).await?;
+
+        Ok(users
+            .into_iter()
+            .map(|user| Self {
+                id: user.id,
+                created_at: user.created_at,
+                email: user.email,
+                username: user.username,
+                profile: user.profile,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                is_admin: user.is_admin,
+            })
+            .collect())
+    }
+
     pub async fn get_by_email(pool: &PgPool, email: &str) -> Result<Option<Self>> {
         let user_id = DbUser::get_by_email(pool, email).await?;
 
