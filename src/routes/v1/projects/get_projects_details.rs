@@ -24,7 +24,7 @@ use uuid::Uuid;
 pub async fn get_projects_details(
     data: Data<AppState>,
     _: ApiKeyHeader,
-    LoggedIn(user): LoggedIn,
+    LoggedIn(_user): LoggedIn,
     project_id: Path<Uuid>,
     RequestType {
         fetch_level,
