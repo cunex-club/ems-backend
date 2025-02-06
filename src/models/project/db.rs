@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
 
-use crate::models::election::db::DbElection;
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, BaseQuery, GetById)]
 #[base_query(
     query = "SELECT * FROM projects",
