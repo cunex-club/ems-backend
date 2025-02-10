@@ -38,7 +38,7 @@ impl Queryable for QueryableProject {
         })
         .push_if_some(self.name, |mut f, name| {
             f.push_sql("name ILIKE ")
-                .push_param(QueryParam::String(format!("%{}%", name)));
+                .push_param(QueryParam::String(format!("%{name}%")));
 
             f
         });
