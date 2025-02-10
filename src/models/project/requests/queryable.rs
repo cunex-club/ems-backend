@@ -21,9 +21,9 @@ impl Queryable for QueryableProject {
             f
         })
         .push_if_some(self.owner_id, |mut f, owner_id| {
-            f.push_sql("owner_id = ANY(")
+            f.push_sql("owner_id = ")
                 .push_param(QueryParam::Uuid(owner_id))
-                .push_sql(")");
+                .push_sql("");
 
             f
         })
@@ -32,7 +32,7 @@ impl Queryable for QueryableProject {
                 .push_param(QueryParam::ArrayUuid(member_ids.clone()))
                 .push_sql(")) OR owner_id = ANY(");
             f.push_param(QueryParam::ArrayUuid(member_ids.clone()))
-                .push_sql(")");
+                .push_sql("))");
 
             f
         })

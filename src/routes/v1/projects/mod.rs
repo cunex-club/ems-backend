@@ -5,4 +5,5 @@ pub mod query_projects;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(get_projects_details::get_projects_details);
+    cfg.service(query_projects::query_projects);
 }
