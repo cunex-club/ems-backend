@@ -23,7 +23,7 @@ impl FetchLevelVariant<DbElection> for CompactElection {
     async fn from_table(
         pool: &PgPool,
         table: DbElection,
-        _descendant_fetch_level: Option<&FetchLevel>,
+        _descendant_fetch_level: Option<FetchLevel>,
         _authorizer: &dyn Authorizer,
     ) -> Result<Self> {
         Ok(Self {

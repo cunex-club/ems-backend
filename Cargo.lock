@@ -734,7 +734,6 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "mysk-lib",
- "mysk-lib-derives",
  "mysk-lib-macros",
  "parking_lot",
  "rand",
@@ -1625,7 +1624,6 @@ dependencies = [
  "chrono",
  "futures",
  "jsonwebtoken",
- "mysk-lib-derives",
  "mysk-lib-macros",
  "rand",
  "reqwest",
@@ -1639,22 +1637,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "mysk-lib-derives"
+name = "mysk-lib-macros"
 version = "0.5.2"
 dependencies = [
  "darling",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "mysk-lib-macros"
-version = "0.5.2"
-dependencies = [
- "async-trait",
- "paste",
- "sqlx",
- "uuid",
 ]
 
 [[package]]

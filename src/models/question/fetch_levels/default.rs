@@ -27,7 +27,7 @@ impl FetchLevelVariant<DbQuestion> for DefaultQuestion {
     async fn from_table(
         pool: &PgPool,
         table: DbQuestion,
-        descendant_fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<FetchLevel>,
         authorizer: &dyn Authorizer,
     ) -> Result<Self> {
         let candidate_ids = DbQuestion::get_candidates(pool, table.id).await?;
@@ -38,7 +38,7 @@ impl FetchLevelVariant<DbQuestion> for DefaultQuestion {
                 pool,
                 table.election_id,
                 descendant_fetch_level,
-                Some(&FetchLevel::IdOnly),
+                Some(FetchLevel::IdOnly),
                 authorizer,
             )
             .await?,
@@ -54,7 +54,7 @@ impl FetchLevelVariant<DbQuestion> for DefaultQuestion {
                 pool,
                 candidate_ids,
                 descendant_fetch_level,
-                Some(&FetchLevel::IdOnly),
+                Some(FetchLevel::IdOnly),
                 authorizer,
             )
             .await?,

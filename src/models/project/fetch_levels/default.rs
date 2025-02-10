@@ -24,7 +24,7 @@ impl FetchLevelVariant<DbProject> for DefaultProject {
     async fn from_table(
         pool: &PgPool,
         table: DbProject,
-        descendant_fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<FetchLevel>,
         authorizer: &dyn Authorizer,
     ) -> Result<Self> {
         let election_ids = DbProject::get_elections(pool, table.id).await?;
@@ -37,7 +37,7 @@ impl FetchLevelVariant<DbProject> for DefaultProject {
                 pool,
                 election_ids,
                 descendant_fetch_level,
-                Some(&FetchLevel::IdOnly),
+                Some(FetchLevel::IdOnly),
                 authorizer,
             )
             .await?,

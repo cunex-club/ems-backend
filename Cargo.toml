@@ -36,4 +36,3 @@ sqlx = { version = "0.8.3", features = [
 ] }
 mysk-lib = { path = "./dep/mysk-api/mysk-lib" }
 mysk-lib-macros = { path = "./dep/mysk-api/mysk-lib-macros" }
-mysk-lib-derives = { path = "./dep/mysk-api/mysk-lib-derives" }

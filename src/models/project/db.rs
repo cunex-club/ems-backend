@@ -1,10 +1,14 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use mysk_lib::prelude::*;
-use mysk_lib_derives::{BaseQuery, GetById};
-use mysk_lib_macros::traits::db::{BaseQuery, GetById};
+use mysk_lib::{
+    common::requests::FilterConfig, models::traits::QueryDb, prelude::*, query::Queryable,
+};
+use mysk_lib_macros::{BaseQuery, GetById};
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::{prelude::FromRow, Postgres, QueryBuilder};
 use uuid::Uuid;
+
+use super::requests::{queryable::QueryableProject, sortable::SortableProject};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, BaseQuery, GetById)]
 #[base_query(
@@ -79,5 +83,21 @@ impl DbProject {
         .await?
         .count
         .unwrap_or(0))
+    }
+}
+
+#[async_trait]
+impl QueryDb<QueryableProject, SortableProject> for DbProject {
+    fn build_shared_query(
+        query_builder: &mut QueryBuilder<'_, Postgres>,
+        filter: Option<FilterConfig<QueryableProject>>,
+    ) {
+        if let Some(filter) = filter {
+            if let Some(data) = &filter.data {
+                data.clone()
+                    .to_where_clause()
+                    .append_into_query_builder(query_builder);
+            }
+        }
     }
 }

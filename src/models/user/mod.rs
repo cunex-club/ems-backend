@@ -2,8 +2,8 @@ pub(crate) mod db;
 
 use crate::models::user::db::DbUser;
 use chrono::{DateTime, Utc};
+use mysk_lib::models::traits::GetById;
 use mysk_lib::prelude::*;
-use mysk_lib_macros::traits::db::GetById;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;

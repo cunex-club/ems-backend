@@ -21,7 +21,7 @@ impl FetchLevelVariant<DbProject> for CompactProject {
     async fn from_table(
         pool: &PgPool,
         table: DbProject,
-        _descendant_fetch_level: Option<&FetchLevel>,
+        _descendant_fetch_level: Option<FetchLevel>,
         _authorizer: &dyn Authorizer,
     ) -> Result<Self> {
         Ok(Self {

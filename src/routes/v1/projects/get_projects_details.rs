@@ -38,8 +38,8 @@ pub async fn get_projects_details(
     let project = Project::get_by_id(
         pool,
         project_id,
-        fetch_level.as_ref(),
-        descendant_fetch_level.as_ref(),
+        fetch_level,
+        descendant_fetch_level,
         &DefaultAuthorizer,
     )
     .await?;

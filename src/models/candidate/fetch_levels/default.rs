@@ -33,7 +33,7 @@ impl FetchLevelVariant<DbCandidate> for DefaultCandidate {
     async fn from_table(
         pool: &PgPool,
         table: DbCandidate,
-        descendant_fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<FetchLevel>,
         authorizer: &dyn Authorizer,
     ) -> Result<Self> {
         Ok(Self {
@@ -46,7 +46,7 @@ impl FetchLevelVariant<DbCandidate> for DefaultCandidate {
                 pool,
                 table.question_id,
                 descendant_fetch_level,
-                Some(&FetchLevel::IdOnly),
+                Some(FetchLevel::IdOnly),
                 authorizer,
             )
             .await?,
