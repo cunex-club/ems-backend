@@ -131,7 +131,7 @@ pub async fn google_oauth_handler(
 
             Ok(HttpResponse::Ok().cookie(cookie).json(response))
         }
-        Err(err) => Err(Error::InternalSeverError(
+        Err(err) => Err(Error::InternalServerError(
             err.to_string(),
             "/auth/oauth/google".to_string(),
         )),

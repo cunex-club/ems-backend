@@ -121,7 +121,7 @@ pub fn generate_oauth_init_url(client_id: &str, redirect_uri: &str) -> Result<(S
     Ok((
         format!(
             "https://accounts.google.com/o/oauth2/v2/auth?{}",
-            serde_qs::to_string(&query_params).map_err(|_| Error::InternalSeverError(
+            serde_qs::to_string(&query_params).map_err(|_| Error::InternalServerError(
                 "Internal server error".to_string(),
                 "/auth/oauth/google".to_string()
             ))?,
@@ -160,7 +160,7 @@ pub async fn exchange_oauth_code(
     let code_exchange_response = Client::new()
         .post(format!(
             "https://oauth2.googleapis.com/token?{}",
-            serde_qs::to_string(&query_params).map_err(|_| Error::InternalSeverError(
+            serde_qs::to_string(&query_params).map_err(|_| Error::InternalServerError(
                 "Internal server error".to_string(),
                 "/auth/oauth/google".to_string()
             ))?,
@@ -174,13 +174,13 @@ pub async fn exchange_oauth_code(
             .json::<CodeExchangeResponse>()
             .await
             .map_err(|_| {
-                Error::InternalSeverError(
+                Error::InternalServerError(
                     "Internal server error".to_string(),
                     "/auth/oauth/google".to_string(),
                 )
             })?
             .id_token),
-        Err(_) => Err(Error::InternalSeverError(
+        Err(_) => Err(Error::InternalServerError(
             "Internal server error".to_string(),
             "/auth/oauth/google".to_string(),
         )),
@@ -194,7 +194,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     let public_keys_response = match public_keys_response {
         Ok(response) => response,
         Err(err) => {
-            return Err(Error::InternalSeverError(
+            return Err(Error::InternalServerError(
                 err.to_string(),
                 "verify_id_token".to_string(),
             ))
@@ -202,7 +202,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     };
 
     if !public_keys_response.status().is_success() {
-        return Err(Error::InternalSeverError(
+        return Err(Error::InternalServerError(
             "Failed to get public keys".to_string(),
             "verify_id_token".to_string(),
         ));
@@ -214,7 +214,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     let public_keys: GooglePublicKeys = match public_keys {
         Ok(keys) => keys,
         Err(err) => {
-            return Err(Error::InternalSeverError(
+            return Err(Error::InternalServerError(
                 err.to_string(),
                 "verify_id_token".to_string(),
             ))
@@ -232,7 +232,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     let header = match jsonwebtoken::decode_header(id_token) {
         Ok(header) => header,
         Err(err) => {
-            return Err(Error::InternalSeverError(
+            return Err(Error::InternalServerError(
                 err.to_string(),
                 "verify_id_token".to_string(),
             ))
@@ -240,7 +240,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     };
 
     let Some(kid) = header.kid else {
-        return Err(Error::InternalSeverError(
+        return Err(Error::InternalServerError(
             "No kid in header".to_string(),
             "verify_id_token".to_string(),
         ));
@@ -253,7 +253,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     let public_key = match public_key {
         Ok(key) => key,
         Err(err) => {
-            return Err(Error::InternalSeverError(
+            return Err(Error::InternalServerError(
                 err.to_string(),
                 "verify_id_token".to_string(),
             ))
@@ -269,7 +269,7 @@ pub async fn verify_id_token(id_token: &str, env: &Config) -> Result<TokenPayloa
     let token_payload = match token_payload {
         Ok(payload) => payload,
         Err(err) => {
-            return Err(Error::InternalSeverError(
+            return Err(Error::InternalServerError(
                 err.to_string(),
                 "verify_id_token".to_string(),
             ))

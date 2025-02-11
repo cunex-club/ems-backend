@@ -44,7 +44,7 @@ impl DbUser {
             .fetch_one(pool)
             .await
             .map_err(|err| {
-                Error::InternalSeverError(err.to_string(), "/auth/oauth/gsi".to_string())
+                Error::InternalServerError(err.to_string(), "/auth/oauth/gsi".to_string())
             })
     }
 }

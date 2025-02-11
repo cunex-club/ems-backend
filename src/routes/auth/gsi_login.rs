@@ -99,7 +99,7 @@ async fn gsi_handler(data: Data<AppState>, query: Json<OAuthRequest>) -> Result<
 
             Ok(HttpResponse::Ok().cookie(cookie).json(response))
         }
-        Err(err) => Err(Error::InternalSeverError(
+        Err(err) => Err(Error::InternalServerError(
             err.to_string(),
             "/auth/oauth/gsi".to_string(),
         )),

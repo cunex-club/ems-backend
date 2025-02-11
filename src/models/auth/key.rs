@@ -63,7 +63,7 @@ impl ApiKey {
 
         match res {
             Ok(_) => Ok(format!("ems_{short_token}_{long_token}")),
-            Err(err) => Err(Error::InternalSeverError(
+            Err(err) => Err(Error::InternalServerError(
                 err.to_string(),
                 "ApiKey Model".to_string(),
             )),
