@@ -65,49 +65,47 @@ impl Authorize for DbElection {
         &self,
         user_id: Uuid,
         pool: &sqlx::PgPool,
-        action: ActionType,
+        _action: ActionType,
     ) -> Result<()> {
-        match action {
-            _ => {
-                // If user is owner of project or is member of project
-                let is_owner = sqlx::query!(
-                    r#"
-                    SELECT COUNT(*)
-                    FROM projects
-                    WHERE id = $1 AND owner_id = $2
-                    "#,
-                    self.project_id,
-                    user_id
-                )
-                .fetch_one(pool)
-                .await?
-                .count
-                .unwrap_or(0)
-                    > 0;
+        {
+            // If user is owner of project or is member of project
+            let is_owner = sqlx::query!(
+                r#"
+                SELECT COUNT(*)
+                FROM projects
+                WHERE id = $1 AND owner_id = $2
+                "#,
+                self.project_id,
+                user_id
+            )
+            .fetch_one(pool)
+            .await?
+            .count
+            .unwrap_or(0)
+                > 0;
 
-                let is_member = sqlx::query!(
-                    r#"
-                    SELECT COUNT(*)
-                    FROM project_members
-                    WHERE project_id = $1 AND user_id = $2
-                    "#,
-                    self.project_id,
-                    user_id
-                )
-                .fetch_one(pool)
-                .await?
-                .count
-                .unwrap_or(0)
-                    > 0;
+            let is_member = sqlx::query!(
+                r#"
+                SELECT COUNT(*)
+                FROM project_members
+                WHERE project_id = $1 AND user_id = $2
+                "#,
+                self.project_id,
+                user_id
+            )
+            .fetch_one(pool)
+            .await?
+            .count
+            .unwrap_or(0)
+                > 0;
 
-                if is_owner || is_member {
-                    Ok(())
-                } else {
-                    Err(Error::InvalidPermission(
-                        "Election Authorizer".to_string(),
-                        "User is not authorized to create election".to_string(),
-                    ))
-                }
+            if is_owner || is_member {
+                Ok(())
+            } else {
+                Err(Error::InvalidPermission(
+                    "Election Authorizer".to_string(),
+                    "User is not authorized to create election".to_string(),
+                ))
             }
         }
     }

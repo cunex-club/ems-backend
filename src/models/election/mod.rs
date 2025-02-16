@@ -5,8 +5,6 @@ use crate::models::election::{
 
 use mysk_lib::models::top_level_variant::TopLevelVariant;
 
-use super::Authorize;
-
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
 
