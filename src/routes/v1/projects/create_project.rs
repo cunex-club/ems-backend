@@ -87,5 +87,5 @@ pub async fn create_project(
     )
     .await?;
 
-    Ok(HttpResponse::Ok().json(ResponseType::new(project, None)))
+    Ok(HttpResponse::Created().json(ResponseType::new(project, None)))
 }
