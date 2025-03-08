@@ -18,9 +18,9 @@ pub struct TokenClaims {
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleUserResult {
-    pub _id: String,
+    _id: String,
     pub email: String,
-    pub _verified_email: bool,
+    _verified_email: bool,
     pub name: String,
     pub given_name: String,
     pub family_name: String,

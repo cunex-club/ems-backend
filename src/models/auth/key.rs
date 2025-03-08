@@ -72,13 +72,13 @@ impl ApiKey {
 }
 
 impl PrefixedApiKey {
-    pub fn new(prefix: String, short_token: String, long_token: String) -> Self {
-        Self {
-            prefix,
-            short_token,
-            long_token,
-        }
-    }
+    // pub fn new(prefix: String, short_token: String, long_token: String) -> Self {
+    //     Self {
+    //         prefix,
+    //         short_token,
+    //         long_token,
+    //     }
+    // }
 
     pub fn get_short_token(&self) -> &str {
         &self.short_token
@@ -88,10 +88,9 @@ impl PrefixedApiKey {
         &self.long_token
     }
 
-    #[must_use]
-    pub fn get_prefix(&self) -> &str {
-        &self.prefix
-    }
+    // pub fn get_prefix(&self) -> &str {
+    //     &self.prefix
+    // }
 }
 
 impl TryFrom<String> for PrefixedApiKey {
