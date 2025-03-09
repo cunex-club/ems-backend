@@ -20,8 +20,8 @@ pub struct DbQuestion {
     pub question_th: String,
     pub question_en: String,
     pub faculty_code: String,
-    pub student_year_start: i64,
-    pub student_year_end: i64,
+    pub student_year_start: i32,
+    pub student_year_end: i32,
     pub student_program: String,
 }
 
