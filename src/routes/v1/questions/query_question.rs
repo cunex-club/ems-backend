@@ -1,8 +1,8 @@
 use crate::{
     extractors::{api_key::ApiKeyHeader, logged_in::LoggedIn},
-    models::election::{
-        requests::{queryable::QueryableElection, sortable::SortableElection},
-        Election,
+    models::question::{
+        requests::{queryable::QueryableQuestion, sortable::SortableQuestion},
+        Question,
     },
     AppState,
 };
@@ -18,7 +18,7 @@ use mysk_lib::{
 };
 
 #[get("")]
-pub async fn query_election(
+pub async fn query_question(
     data: Data<AppState>,
     _: ApiKeyHeader,
     LoggedIn(_user): LoggedIn,
@@ -29,11 +29,11 @@ pub async fn query_election(
         fetch_level,
         descendant_fetch_level,
         ..
-    }: RequestType<(), QueryableElection, SortableElection>,
+    }: RequestType<(), QueryableQuestion, SortableQuestion>,
 ) -> Result<impl Responder> {
     let pool = &data.db;
 
-    let (elections, pagination) = Election::query(
+    let (questions, pagination) = Question::query(
         pool,
         fetch_level,
         descendant_fetch_level,
@@ -43,7 +43,7 @@ pub async fn query_election(
         &DefaultAuthorizer,
     )
     .await?;
-    let response = ResponseType::new(elections, Some(MetadataType::new(Some(pagination))));
+    let response = ResponseType::new(questions, Some(MetadataType::new(Some(pagination))));
 
     Ok(HttpResponse::Ok().json(response))
 }

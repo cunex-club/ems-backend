@@ -42,7 +42,7 @@ impl Queryable for QueryableElection {
                 "project_id = ANY(SELECT project_id FROM project_members WHERE user_id = ANY(",
             )
             .push_param(QueryParam::ArrayUuid(member_ids.clone()))
-            .push_sql(")");
+            .push_sql("))");
             f
         })
         .push_if_some(self.name, |mut f, name| {

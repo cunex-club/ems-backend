@@ -1,12 +1,17 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use mysk_lib::{permissions::ActionType, prelude::*};
+use mysk_lib::{
+    common::requests::FilterConfig, models::traits::QueryDb, permissions::ActionType, prelude::*,
+    query::Queryable,
+};
 use mysk_lib_macros::{BaseQuery, GetById};
 use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use sqlx::{prelude::FromRow, Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::Authorize;
+
+use super::requests::{queryable::QueryableQuestion, sortable::SortableQuestion};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, BaseQuery, GetById)]
 #[base_query(
@@ -89,6 +94,22 @@ impl Authorize for DbQuestion {
                 "Question Authorizer".to_string(),
                 "User is not authorized to create question".to_string(),
             ))
+        }
+    }
+}
+
+#[async_trait]
+impl QueryDb<QueryableQuestion, SortableQuestion> for DbQuestion {
+    fn build_shared_query(
+        query_builder: &mut QueryBuilder<'_, Postgres>,
+        filter: Option<FilterConfig<QueryableQuestion>>,
+    ) {
+        if let Some(filter) = filter {
+            if let Some(data) = &filter.data {
+                data.clone()
+                    .to_where_clause()
+                    .append_into_query_builder(query_builder);
+            }
         }
     }
 }
