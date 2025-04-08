@@ -28,3 +28,11 @@ docker build -t ems-backend .
 ```bash
 docker run --env-file .env -p 443:4430 -p 80:8000 ems-backend 
 ```
+
+## Deploy
+
+### Docker
+
+```bash
+docker save ems-backend | bzip2 | ssh -i cu-team_key.pem azureuser@cuelection.southeastasia.cloudapp.azure.com sudo docker load
+```
