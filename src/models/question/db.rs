@@ -23,6 +23,7 @@ pub struct DbQuestion {
     pub created_at: Option<DateTime<Utc>>,
     pub election_id: Uuid,
     pub question_th: String,
+    pub question_type: String,
     pub question_en: String,
     pub faculty_code: String,
     pub student_year_start: i32,

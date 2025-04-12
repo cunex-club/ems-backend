@@ -28,6 +28,7 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize)]
 struct ModifyQuestionRequest {
     pub question: Option<FlexibleMultiLangString>,
+    pub question_type: Option<String>,
     pub faculty_code: Option<String>,
     pub student_year_start: Option<i32>,
     pub student_year_end: Option<i32>,
@@ -71,6 +72,7 @@ pub async fn modify_question(
 
     qb.push_update_field("faculty_code", election.faculty_code, QueryParam::String)
         .push_multilang_update_field("question", election.question)
+        .push_update_field("question_type", election.question_type, QueryParam::String)
         .push_update_field(
             "student_year_start",
             election.student_year_start.map(i64::from),
