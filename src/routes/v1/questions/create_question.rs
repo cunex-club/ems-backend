@@ -27,7 +27,7 @@ use uuid::Uuid;
 struct CreateQuestionRequest {
     pub election_id: Uuid,
     pub question: MultiLangString,
-    pub question_type: String,
+    pub is_select_3: bool,
     pub faculty_code: String,
     pub student_year_start: i32,
     pub student_year_end: i32,
@@ -68,14 +68,14 @@ pub async fn create_question(
 
     let created_question_id = query!(
         r#"
-        INSERT INTO questions (election_id, question_th, question_en, question_type, faculty_code, student_year_start, student_year_end, student_program)
+        INSERT INTO questions (election_id, question_th, question_en, is_select_3, faculty_code, student_year_start, student_year_end, student_program)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id
         "#,
         question.election_id,
         question.question.th,
         question.question.en,
-        question.question_type,
+        question.is_select_3,
         question.faculty_code,
         question.student_year_start,
         question.student_year_end,
