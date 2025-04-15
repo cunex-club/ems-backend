@@ -35,8 +35,12 @@ pub async fn delete_project(
     DbProject::get_by_id(pool, project_id).await?;
 
     // Check if user has permission to delete project
-    if query!(
-        r#"SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND owner_id = $2)"#,
+    if !query!(
+        r#"SELECT EXISTS (
+            SELECT 1
+            FROM projects
+            WHERE id = $1 AND owner_id = $2
+        ) AS exists"#,
         project_id,
         user.id
     )
