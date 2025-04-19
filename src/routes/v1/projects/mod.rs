@@ -1,5 +1,6 @@
 use actix_web::web::ServiceConfig;
 
+pub mod add_member;
 pub mod create_project;
 pub mod delete_project;
 pub mod get_projects_details;
@@ -12,4 +13,5 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(create_project::create_project);
     cfg.service(modify_project::modify_project);
     cfg.service(delete_project::delete_project);
+    cfg.service(add_member::add_member);
 }
