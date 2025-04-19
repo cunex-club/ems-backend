@@ -37,7 +37,6 @@ struct CreateCandidateRequest {
     pub body_1: String,
     pub body_title_2: String,
     pub body_2: String,
-    pub image_file: String,
 }
 
 #[post("")]
@@ -91,7 +90,7 @@ pub async fn create_candidate(
         candidate.body_1,
         candidate.body_title_2,
         candidate.body_2,
-        candidate.image_file
+        "",
 
     )
     .fetch_one(&mut *transaction)

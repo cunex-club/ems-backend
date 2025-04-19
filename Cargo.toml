@@ -34,5 +34,6 @@ sqlx = { version = "0.8.3", features = [
     "runtime-tokio-native-tls",
     "uuid",
 ] }
+cloud-storage = "0.10"
 mysk-lib = { path = "./dep/mysk-api/mysk-lib" }
 mysk-lib-macros = { path = "./dep/mysk-api/mysk-lib-macros" }

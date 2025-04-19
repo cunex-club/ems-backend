@@ -1,0 +1,104 @@
+use crate::{
+    extractors::{api_key::ApiKeyHeader, logged_in::LoggedIn},
+    models::{
+        candidate::{db::DbCandidate, Candidate},
+        Authorize,
+    },
+    AppState,
+};
+use actix_web::{
+    post,
+    web::{Bytes, Data, Path},
+    HttpRequest, HttpResponse, Responder,
+};
+use mysk_lib::{
+    common::response::ResponseType, models::traits::GetById, permissions::ActionType, prelude::*,
+};
+use sqlx::query;
+use uuid::Uuid;
+
+#[post("/{id}/upload")]
+pub async fn upload_candidate_image(
+    data: Data<AppState>,
+    candidate_id: Path<Uuid>,
+    _: ApiKeyHeader,
+    LoggedIn(user): LoggedIn,
+    request: HttpRequest,
+    image: Bytes,
+) -> Result<impl Responder> {
+    let pool = &data.db;
+    let storage_client = &data.storage_client;
+    let candidate_id = candidate_id.into_inner();
+    let image = image.to_vec();
+
+    let content_type = match request.headers().get("Content-Type") {
+        Some(content_type) => content_type.to_str().unwrap_or(""),
+        None => {
+            return Err(Error::InvalidRequest(
+                "Invalid Content-Type".to_string(),
+                format!("v1/candidates/{candidate_id}/upload"),
+            ))
+        }
+    };
+
+    // Check if the content type is valid
+    if !content_type.starts_with("image/") {
+        return Err(Error::InvalidRequest(
+            "Invalid Content-Type".to_string(),
+            format!("v1/candidates/{candidate_id}/upload"),
+        ));
+    }
+
+    // Check if the candidate exists
+    let db_candidate = DbCandidate::get_by_id(pool, candidate_id).await?;
+
+    db_candidate
+        .authorize(user.id, pool, ActionType::Update)
+        .await?;
+
+    let file_extension = content_type.split('/').next_back().ok_or_else(|| {
+        Error::InvalidRequest(
+            "Invalid Content-Type".to_string(),
+            format!("v1/candidates/{candidate_id}/upload"),
+        )
+    })?;
+
+    // Upload the image to the storage
+    let created_image = match storage_client
+        .object()
+        .create(
+            "ems-candidate-profile",
+            image,
+            &format!("{candidate_id}.{file_extension}"),
+            content_type,
+        )
+        .await
+    {
+        Ok(created_image) => created_image,
+        Err(err) => {
+            return Err(Error::InternalServerError(
+                err.to_string(),
+                format!("v1/candidates/{candidate_id}/upload"),
+            ))
+        }
+    };
+
+    query!(
+        r#"
+        UPDATE candidates
+        SET image_file = $1
+        WHERE id = $2
+        "#,
+        format!(
+            "https://storage.googleapis.com/{}/{}",
+            created_image.bucket, created_image.name
+        ),
+        candidate_id
+    )
+    .execute(pool)
+    .await?;
+
+    let response: ResponseType<Option<Candidate>> = ResponseType::new(None, None);
+
+    Ok(HttpResponse::Created().json(response))
+}

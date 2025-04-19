@@ -9,11 +9,17 @@ use actix_web::{
     web::{Data, JsonConfig},
     App, HttpServer,
 };
+use cloud_storage::Client;
 use dotenv::dotenv;
 use log::{debug, error, info, warn};
 use parking_lot::Mutex;
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::{collections::HashSet, env, io, process};
+use std::{
+    collections::HashSet,
+    env,
+    io::{self},
+    process,
+};
 
 mod common;
 mod extractors;
@@ -29,6 +35,7 @@ pub struct AppState {
     db: PgPool,
     oauth_states: Mutex<HashSet<String>>,
     env: Config,
+    storage_client: Client,
 }
 
 #[actix_web::main]
@@ -43,6 +50,8 @@ async fn main() -> io::Result<()> {
     }
     env_logger::init();
     let config = Config::init();
+    let storage_client = Client::default();
+
     let host = config.host;
     let port = config.port;
 
@@ -75,6 +84,7 @@ async fn main() -> io::Result<()> {
         db: pool.clone(),
         oauth_states: Mutex::new(HashSet::new()),
         env: config.clone(),
+        storage_client,
     });
 
     HttpServer::new(move || {

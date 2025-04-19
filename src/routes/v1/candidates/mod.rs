@@ -5,6 +5,7 @@ pub mod delete_candidate;
 pub mod get_candidate_details;
 pub mod modify_candidate;
 pub mod query_candidates;
+pub mod upload_candidate_image;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(create_candidate::create_candidate);
@@ -12,4 +13,5 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(get_candidate_details::get_candidate_details);
     cfg.service(query_candidates::query_candidates);
     cfg.service(modify_candidate::modify_candidate);
+    cfg.service(upload_candidate_image::upload_candidate_image);
 }
