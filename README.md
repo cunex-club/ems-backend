@@ -26,7 +26,7 @@ docker build -t ems-backend .
 ### Docker
 
 ```bash
-docker run --env-file .env -p 443:4430 -p 80:8000 ems-backend 
+docker run --env-file .env -p 443:4430 -p 80:8000 -restart=unless-stopped -d ems-backend 
 ```
 
 ## Deploy
