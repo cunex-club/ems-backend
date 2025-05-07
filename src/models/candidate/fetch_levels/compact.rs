@@ -9,6 +9,7 @@ pub struct CompactCandidate {
     pub id: Uuid,
     pub choice_label: MultiLangString,
     pub title: String,
+    pub image_file: String,
 }
 
 impl From<DbCandidate> for CompactCandidate {
@@ -20,6 +21,7 @@ impl From<DbCandidate> for CompactCandidate {
                 en: Some(candidate.choice_label_en),
             },
             title: candidate.title,
+            image_file: candidate.image_file,
         }
     }
 }
