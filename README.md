@@ -26,7 +26,7 @@ docker build -t ems-backend .
 ### Docker
 
 ```bash
-docker run --env-file .env -p 443:4430 -p 80:8000 -restart=unless-stopped -d ems-backend 
+sudo docker run --env-file .env -p 443:4430 -p 80:8000 -restart=unless-stopped -d -v ~/cunex-ems-449308-89f684faa146.json:/cunex-ems-449308-89f684faa146.json:ro ems-backend
 ```
 
 ## Deploy
