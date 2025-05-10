@@ -89,10 +89,7 @@ pub async fn upload_candidate_image(
         SET image_file = $1
         WHERE id = $2
         "#,
-        format!(
-            "https://storage.googleapis.com/{}/{}",
-            created_image.bucket, created_image.name
-        ),
+        created_image.name,
         candidate_id
     )
     .execute(pool)
