@@ -3,6 +3,7 @@ use actix_web::web::ServiceConfig;
 pub mod create_candidate;
 pub mod delete_candidate;
 pub mod get_candidate_details;
+pub mod get_candidate_profile;
 pub mod modify_candidate;
 pub mod query_candidates;
 pub mod upload_candidate_image;
@@ -14,4 +15,5 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(query_candidates::query_candidates);
     cfg.service(modify_candidate::modify_candidate);
     cfg.service(upload_candidate_image::upload_candidate_image);
+    cfg.service(get_candidate_profile::get_candidate_profile);
 }
