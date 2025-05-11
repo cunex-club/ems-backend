@@ -1,8 +1,4 @@
-use crate::{
-    extractors::{api_key::ApiKeyHeader, logged_in::LoggedIn},
-    models::candidate::db::DbCandidate,
-    AppState,
-};
+use crate::{models::candidate::db::DbCandidate, AppState};
 use actix_web::{
     get,
     web::{Data, Path},
@@ -14,8 +10,6 @@ use uuid::Uuid;
 #[get("/{id}/profile")]
 pub async fn get_candidate_profile(
     data: Data<AppState>,
-    // _: ApiKeyHeader,
-    // LoggedIn(_user): LoggedIn,
     candidate_id: Path<Uuid>,
 ) -> Result<impl Responder> {
     let pool = &data.db;
