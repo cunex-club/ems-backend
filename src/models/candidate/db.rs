@@ -36,6 +36,7 @@ pub struct DbCandidate {
     pub body_title_2: String,
     pub body_2: String,
     pub image_file: String,
+    pub choice_order: i32,
 }
 
 #[async_trait]

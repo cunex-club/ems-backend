@@ -9,11 +9,12 @@ pub enum SortableCandidate {
     Title,
     ChoiceLabelTh,
     ChoiceLabelEn,
+    ChoiceOrder,
 }
 
 impl Default for SortableCandidate {
     fn default() -> Self {
-        Self::Id
+        Self::ChoiceOrder
     }
 }
 
@@ -25,6 +26,7 @@ impl Display for SortableCandidate {
             Self::Title => write!(f, "title"),
             Self::ChoiceLabelTh => write!(f, "choice_label_th"),
             Self::ChoiceLabelEn => write!(f, "choice_label_en"),
+            Self::ChoiceOrder => write!(f, "choice_order"),
         }
     }
 }

@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_lines)]
 use crate::{
     extractors::{api_key::ApiKeyHeader, logged_in::LoggedIn},
     models::{
@@ -23,6 +24,7 @@ use mysk_lib::{
     query::{QueryParam, QueryablePlaceholder, SqlSetClause},
 };
 use serde::Deserialize;
+use sqlx::query;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -39,6 +41,7 @@ struct ModifyCandidateRequest {
     pub body_title_2: Option<String>,
     pub body_2: Option<String>,
     pub image_file: Option<String>,
+    pub new_choice_order: Option<i32>,
 }
 
 #[put("/{id}")]
@@ -63,7 +66,6 @@ pub async fn modify_candidate(
             format!("/candidates/{candidate_id}"),
         ));
     };
-
     // Check if the project exists
     let db_candidate = DbCandidate::get_by_id(pool, candidate_id).await?;
 
@@ -89,12 +91,77 @@ pub async fn modify_candidate(
         .push_update_field("body_2", candidate.body_2, QueryParam::String)
         .push_update_field("image_file", candidate.image_file, QueryParam::String);
 
-    let mut qb = qb.into_query_builder("UPDATE candidates");
-    qb.push(" WHERE id = ")
-        .push_bind(candidate_id)
-        .build()
+    // If there is no field to update, we don't need to run the query
+
+    if !qb.0.len() == 1 {
+        let mut qb = qb.into_query_builder("UPDATE candidates");
+        qb.push(" WHERE id = ")
+            .push_bind(candidate_id)
+            .build()
+            .execute(&mut *transaction)
+            .await?;
+    }
+
+    if let Some(new_choice_order) = candidate.new_choice_order {
+        // Get current choice_order
+        let current_choice_order = query!(
+            r#"
+            SELECT choice_order FROM candidates WHERE id = $1
+            "#,
+            candidate_id
+        )
+        .fetch_one(&mut *transaction)
+        .await?
+        .choice_order;
+        // Update choice_order for all candidates in the same question by
+        // incrementing or decrementing their choice_order
+        match current_choice_order.cmp(&new_choice_order) {
+            std::cmp::Ordering::Greater => {
+                query!(
+                    r#"
+                    UPDATE candidates
+                    SET choice_order = choice_order + 1
+                    WHERE question_id = (SELECT question_id FROM candidates WHERE id = $1)
+                    AND choice_order >= $2 AND choice_order < $3
+                    "#,
+                    candidate_id,
+                    new_choice_order,
+                    current_choice_order
+                )
+                .execute(&mut *transaction)
+                .await?;
+            }
+            std::cmp::Ordering::Less => {
+                query!(
+                    r#"
+                    UPDATE candidates
+                    SET choice_order = choice_order - 1
+                    WHERE question_id = (SELECT question_id FROM candidates WHERE id = $1)
+                    AND choice_order > $2 AND choice_order <= $3
+                    "#,
+                    candidate_id,
+                    current_choice_order,
+                    new_choice_order
+                )
+                .execute(&mut *transaction)
+                .await?;
+            }
+            std::cmp::Ordering::Equal => {}
+        }
+
+        // Update choice_order for the candidate
+        query!(
+            r#"
+            UPDATE candidates
+            SET choice_order = $2
+            WHERE id = $1
+            "#,
+            candidate_id,
+            new_choice_order
+        )
         .execute(&mut *transaction)
         .await?;
+    }
 
     transaction.commit().await?;
 
