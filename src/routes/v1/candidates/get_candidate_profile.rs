@@ -14,8 +14,8 @@ use uuid::Uuid;
 #[get("/{id}/profile")]
 pub async fn get_candidate_profile(
     data: Data<AppState>,
-    _: ApiKeyHeader,
-    LoggedIn(_user): LoggedIn,
+    // _: ApiKeyHeader,
+    // LoggedIn(_user): LoggedIn,
     candidate_id: Path<Uuid>,
 ) -> Result<impl Responder> {
     let pool = &data.db;
