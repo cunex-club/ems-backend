@@ -1,9 +1,6 @@
 use crate::{
     extractors::{api_key::ApiKeyHeader, logged_in::LoggedIn},
-    models::{
-        project::{db::DbProject, Project},
-        user::User,
-    },
+    models::project::{db::DbProject, Project},
     AppState,
 };
 use actix_web::{
@@ -26,7 +23,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 struct AddMemberRequest {
-    member_id: Uuid,
+    email: String,
 }
 
 #[post("/{id}/members")]
@@ -42,7 +39,7 @@ pub async fn add_member(
     let pool = &data.db;
     let project_id = project_id.into_inner();
 
-    let Some(project) = request_data else {
+    let Some(request_data) = request_data else {
         return Err(Error::InvalidRequest(
             "Json deserialize error: field `data` can not be empty".to_string(),
             format!("/projects/{project_id}"),
@@ -61,22 +58,49 @@ pub async fn add_member(
     }
 
     // Check if the member exists
-    let member = User::get_by_id(pool, project.member_id).await?;
-
-    // Add the member to the project
-    query!(
+    // let member = User::get_by_id(pool, project.member_id).await?;
+    match query!(
         r#"
-        INSERT INTO project_members (project_id, user_id)
-        SELECT $1, $2
-        WHERE NOT EXISTS (
-            SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2
-        )
+        SELECT id FROM users WHERE email = $1
         "#,
-        project_id,
-        member.id
+        request_data.email
     )
-    .execute(pool)
-    .await?;
+    .fetch_one(pool)
+    .await
+    {
+        Ok(row) => {
+            // Add the member to the project
+            query!(
+                r#"
+                INSERT INTO project_members (project_id, user_id)
+                SELECT $1, $2
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM project_members WHERE project_id = $1 AND user_id = $2
+                )
+                "#,
+                project_id,
+                row.id
+            )
+            .execute(pool)
+            .await?;
+        }
+        Err(_) => {
+            // If the user does not exist, add them to the queue
+            query!(
+                r#"
+                INSERT INTO project_member_queue (project_id, email)
+                SELECT $1, $2
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM project_member_queue WHERE project_id = $1 AND email = $2
+                )
+                "#,
+                project_id,
+                request_data.email
+            )
+            .execute(pool)
+            .await?;
+        }
+    };
 
     let response: ResponseType<Option<Project>> = ResponseType::new(None, None);
 
