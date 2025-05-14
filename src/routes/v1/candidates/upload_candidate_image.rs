@@ -86,7 +86,8 @@ pub async fn upload_candidate_image(
     query!(
         r#"
         UPDATE candidates
-        SET image_file = $1
+        SET image_file = $1, 
+            uploaded_at = NOW()
         WHERE id = $2
         "#,
         created_image.name,

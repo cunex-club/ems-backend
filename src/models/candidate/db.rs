@@ -37,6 +37,7 @@ pub struct DbCandidate {
     pub body_2: String,
     pub image_file: String,
     pub choice_order: i32,
+    pub uploaded_at: Option<DateTime<Utc>>,
 }
 
 impl DbCandidate {

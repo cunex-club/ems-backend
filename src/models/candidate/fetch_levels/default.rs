@@ -60,7 +60,11 @@ impl FetchLevelVariant<DbCandidate> for DefaultCandidate {
             body_1: table.body_1,
             body_title_2: table.body_title_2,
             body_2: table.body_2,
-            image_file: table.image_file,
+            image_file: format!(
+                "/candidates/{}/profile?v={}",
+                table.id,
+                table.uploaded_at.unwrap_or_default().timestamp()
+            ),
         })
     }
 }

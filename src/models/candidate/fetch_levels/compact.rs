@@ -21,7 +21,11 @@ impl From<DbCandidate> for CompactCandidate {
                 en: Some(candidate.choice_label_en),
             },
             title: candidate.title,
-            image_file: candidate.image_file,
+            image_file: format!(
+                "/candidates/{}/profile?v={}",
+                candidate.id,
+                candidate.uploaded_at.unwrap_or_default().timestamp()
+            ),
         }
     }
 }
