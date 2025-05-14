@@ -21,6 +21,7 @@ pub struct DefaultQuestion {
     pub student_year_end: i32,
     pub student_program: String,
     pub candidates: Vec<Candidate>,
+    pub question_order: i32,
 }
 
 #[async_trait]
@@ -60,6 +61,7 @@ impl FetchLevelVariant<DbQuestion> for DefaultQuestion {
                 authorizer,
             )
             .await?,
+            question_order: table.question_order,
         })
     }
 }

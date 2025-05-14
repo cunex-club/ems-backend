@@ -46,13 +46,17 @@ pub async fn delete_candidate(
         .execute(pool)
         .await?;
 
-    storage_client
-        .object()
-        .delete("ems-candidate-profile", &candidate.image_file)
-        .await
-        .map_err(|err| {
-            Error::InternalServerError(err.to_string(), format!("v1/candidates/{candidate_id}"))
-        })?;
+    let filename = candidate.image_file.split('/').next_back().unwrap_or("");
+
+    if !filename.is_empty() {
+        storage_client
+            .object()
+            .delete("ems-candidate-profile", filename)
+            .await
+            .map_err(|err| {
+                Error::InternalServerError(err.to_string(), format!("v1/candidates/{candidate_id}"))
+            })?;
+    }
 
     let response: ResponseType<Option<Question>> = ResponseType::new(None, None);
 

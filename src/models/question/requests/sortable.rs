@@ -10,6 +10,7 @@ pub enum SortableQuestion {
     FacultyCode,
     StudentProgram,
     ElectionId,
+    QuestionOrder,
 }
 
 impl Default for SortableQuestion {
@@ -27,6 +28,7 @@ impl Display for SortableQuestion {
             Self::FacultyCode => write!(f, "faculty_code"),
             Self::StudentProgram => write!(f, "student_program"),
             Self::ElectionId => write!(f, "election_id"),
+            Self::QuestionOrder => write!(f, "question_order"),
         }
     }
 }

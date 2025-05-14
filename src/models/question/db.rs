@@ -29,6 +29,7 @@ pub struct DbQuestion {
     pub student_year_start: i32,
     pub student_year_end: i32,
     pub student_program: String,
+    pub question_order: i32,
 }
 
 impl DbQuestion {
