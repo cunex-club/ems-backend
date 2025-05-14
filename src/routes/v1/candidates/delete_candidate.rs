@@ -30,6 +30,7 @@ pub async fn delete_candidate(
     _: RequestType<(), QueryablePlaceholder, SortablePlaceholder>,
 ) -> Result<impl Responder> {
     let pool = &data.db;
+    let storage_client = &data.storage_client;
     let candidate_id = candidate_id.into_inner();
 
     // Check if election exists
@@ -44,6 +45,14 @@ pub async fn delete_candidate(
     query!("DELETE FROM candidates WHERE id = $1", candidate_id)
         .execute(pool)
         .await?;
+
+    storage_client
+        .object()
+        .delete("ems-candidate-profile", &candidate.image_file)
+        .await
+        .map_err(|err| {
+            Error::InternalServerError(err.to_string(), format!("v1/candidates/{candidate_id}"))
+        })?;
 
     let response: ResponseType<Option<Question>> = ResponseType::new(None, None);
 
