@@ -21,11 +21,15 @@ impl From<DbCandidate> for CompactCandidate {
                 en: Some(candidate.choice_label_en),
             },
             title: candidate.title,
-            image_file: format!(
-                "/candidates/{}/profile?v={}",
-                candidate.id,
-                candidate.uploaded_at.unwrap_or_default().timestamp()
-            ),
+            image_file: if candidate.uploaded_at.is_some() {
+                format!(
+                    "/candidates/{}/profile?v={}",
+                    candidate.id,
+                    candidate.uploaded_at.unwrap_or_default().timestamp()
+                )
+            } else {
+                String::new()
+            },
         }
     }
 }

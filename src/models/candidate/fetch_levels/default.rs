@@ -60,11 +60,15 @@ impl FetchLevelVariant<DbCandidate> for DefaultCandidate {
             body_1: table.body_1,
             body_title_2: table.body_title_2,
             body_2: table.body_2,
-            image_file: format!(
-                "/candidates/{}/profile?v={}",
-                table.id,
-                table.uploaded_at.unwrap_or_default().timestamp()
-            ),
+            image_file: if table.uploaded_at.is_some() {
+                format!(
+                    "/candidates/{}/profile?v={}",
+                    table.id,
+                    table.uploaded_at.unwrap_or_default().timestamp()
+                )
+            } else {
+                String::new()
+            },
         })
     }
 }
