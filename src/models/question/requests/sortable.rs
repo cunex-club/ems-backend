@@ -15,7 +15,7 @@ pub enum SortableQuestion {
 
 impl Default for SortableQuestion {
     fn default() -> Self {
-        Self::Id
+        Self::QuestionOrder
     }
 }
 
