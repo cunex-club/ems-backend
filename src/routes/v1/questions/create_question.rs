@@ -68,8 +68,8 @@ pub async fn create_question(
 
     let created_question_id = query!(
         r#"
-        INSERT INTO questions (election_id, question_th, question_en, select_amount, faculty_code, student_year_start, student_year_end, student_program)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO questions (election_id, question_th, question_en, select_amount, faculty_code, student_year_start, student_year_end, student_program, question_order)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT COALESCE(MAX(question_order), 0) + 1 FROM questions WHERE election_id = $1))
         RETURNING id
         "#,
         question.election_id,

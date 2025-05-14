@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_lines)]
+
 use crate::{
     extractors::{api_key::ApiKeyHeader, logged_in::LoggedIn},
     models::{
@@ -23,6 +25,7 @@ use mysk_lib::{
     query::{QueryParam, QueryablePlaceholder, SqlSetClause},
 };
 use serde::Deserialize;
+use sqlx::query;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -33,6 +36,7 @@ struct ModifyQuestionRequest {
     pub student_year_start: Option<i32>,
     pub student_year_end: Option<i32>,
     pub student_program: Option<String>,
+    pub new_question_order: Option<i32>,
 }
 
 #[put("/{id}")]
@@ -92,12 +96,77 @@ pub async fn modify_question(
             election.student_program,
             QueryParam::String,
         );
-    let mut qb = qb.into_query_builder("UPDATE questions");
-    qb.push(" WHERE id = ")
-        .push_bind(question_id)
-        .build()
+
+    if !qb.0.len() == 1 {
+        let mut qb = qb.into_query_builder("UPDATE questions");
+        qb.push(" WHERE id = ")
+            .push_bind(question_id)
+            .build()
+            .execute(&mut *transaction)
+            .await?;
+    }
+
+    if let Some(new_question_order) = election.new_question_order {
+        // Get current question_order
+        let current_question_order = query!(
+            r#"
+            SELECT question_order FROM questions WHERE id = $1
+            "#,
+            question_id
+        )
+        .fetch_one(&mut *transaction)
+        .await?
+        .question_order;
+
+        // Update question_order for all questions in the same election by
+        // incrementing or decrementing their question_order
+        match current_question_order.cmp(&new_question_order) {
+            std::cmp::Ordering::Greater => {
+                query!(
+                    r#"
+                    UPDATE questions
+                    SET question_order = question_order + 1
+                    WHERE election_id = (SELECT election_id FROM questions WHERE id = $1)
+                    AND question_order >= $2 AND question_order < $3
+                    "#,
+                    question_id,
+                    new_question_order,
+                    current_question_order
+                )
+                .execute(&mut *transaction)
+                .await?;
+            }
+            std::cmp::Ordering::Less => {
+                query!(
+                    r#"
+                    UPDATE questions
+                    SET question_order = question_order - 1
+                    WHERE election_id = (SELECT election_id FROM questions WHERE id = $1)
+                    AND question_order > $2 AND question_order <= $3
+                    "#,
+                    question_id,
+                    current_question_order,
+                    new_question_order
+                )
+                .execute(&mut *transaction)
+                .await?;
+            }
+            std::cmp::Ordering::Equal => {}
+        }
+
+        // Update question_order for the current question
+        query!(
+            r#"
+            UPDATE questions
+            SET question_order = $2
+            WHERE id = $1
+            "#,
+            question_id,
+            new_question_order
+        )
         .execute(&mut *transaction)
         .await?;
+    }
 
     transaction.commit().await?;
 

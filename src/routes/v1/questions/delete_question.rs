@@ -48,6 +48,14 @@ pub async fn delete_question(
         .execute(pool)
         .await?;
 
+    // Update the question order
+    query!(
+        "UPDATE questions SET question_order = question_order - 1 WHERE question_order > $1",
+        question.question_order
+    )
+    .execute(pool)
+    .await?;
+
     let response: ResponseType<Option<Question>> = ResponseType::new(None, None);
 
     Ok(HttpResponse::Accepted().json(response))

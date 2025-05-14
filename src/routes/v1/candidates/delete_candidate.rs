@@ -58,6 +58,14 @@ pub async fn delete_candidate(
             })?;
     }
 
+    // update the choice order
+    query!(
+        "UPDATE candidates SET choice_order = choice_order - 1 WHERE choice_order > $1",
+        candidate.choice_order
+    )
+    .execute(pool)
+    .await?;
+
     let response: ResponseType<Option<Question>> = ResponseType::new(None, None);
 
     Ok(HttpResponse::Accepted().json(response))
