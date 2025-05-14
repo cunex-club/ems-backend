@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use crate::models::Authorize;
+use crate::models::{question::db::DbQuestion, Authorize};
 
 use super::requests::{queryable::QueryableCandidate, sortable::SortableCandidate};
 
@@ -37,6 +37,125 @@ pub struct DbCandidate {
     pub body_2: String,
     pub image_file: String,
     pub choice_order: i32,
+}
+
+impl DbCandidate {
+    pub async fn get_canon_id(pool: &sqlx::PgPool, id: Uuid) -> Result<String> {
+        // canon id is EXX-XX-XX where EXX is the election id and XX is the question id and XX is the candidate id each from order
+        // SELECT election_id, question_order, choice_order FROM candidates WHERE id = $1 INNER JOIN questions ON questions.id = candidates.question_id
+
+        let candidate = sqlx::query!(
+            r#"
+                SELECT election_id, question_order, choice_order
+                FROM candidates
+                INNER JOIN questions ON questions.id = candidates.question_id
+                WHERE candidates.id = $1
+            "#,
+            id
+        )
+        .fetch_optional(pool)
+        .await?;
+        match candidate {
+            Some(candidate) => {
+                let election_id = candidate.election_id.simple().to_string();
+                let question_order = candidate.question_order;
+                let choice_order = candidate.choice_order;
+
+                let canon_id = format!("{election_id}-{question_order:02}-{choice_order:02}");
+                Ok(canon_id)
+            }
+            None => Err(Error::EntityNotFound(
+                "Candidate not found".to_string(),
+                format!("candidates/{id}"),
+            )),
+        }
+    }
+    pub async fn get_canon_candidateinfo_insert(
+        pool: &sqlx::PgPool,
+        id: Vec<Uuid>,
+    ) -> Result<String> {
+        // Return string of tuple for sql insert
+        // (`ID`, `ElectionID`, `Title`, `InfoLine1`, `InfoLine2`, `InfoLine3`, `InfoLine4`, `InfoLine5`, `InfoTitle1`, `infoBody1`, `InfoTitle2`, `infoBody2`, `ImageFile`)
+
+        let candidates = sqlx::query!(
+            r#"
+                SELECT candidates.id, election_id, title, info_line_1, info_line_2, info_line_3, info_line_4, info_line_5, body_title_1, body_1, body_title_2, body_2, image_file
+                FROM candidates
+                INNER JOIN questions on questions.id = candidates.question_id
+                WHERE candidates.id = ANY($1)
+            "#,
+            &id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let mut result = "INSERT INTO `candidateinfo` (`ID`, `ElectionID`, `Title`, `InfoLine1`, `InfoLine2`, `InfoLine3`, `InfoLine4`, `InfoLine5`, `InfoTitle1`, `infoBody1`, `InfoTitle2`, `infoBody2`, `ImageFile`) VALUES ".to_string();
+        for candidate in candidates {
+            let id = DbCandidate::get_canon_id(pool, candidate.id).await?;
+            let election_id = candidate.election_id.simple().to_string();
+            let title = candidate.title;
+            let info_line_1 = candidate.info_line_1;
+            let info_line_2 = candidate.info_line_2;
+            let info_line_3 = candidate.info_line_3;
+            let info_line_4 = candidate.info_line_4;
+            let info_line_5 = candidate.info_line_5;
+            let body_title_1 = candidate.body_title_1;
+            let body_1 = candidate.body_1;
+            let body_title_2 = candidate.body_title_2;
+            let body_2 = candidate.body_2;
+            let image_file_extension = candidate.image_file.split('.').next_back().unwrap_or("");
+            let image_file = id.clone() + "." + image_file_extension;
+
+            result.push_str(&format!(
+                "('{id}', '{election_id}', '{title}', '{info_line_1}', '{info_line_2}', '{info_line_3}', '{info_line_4}', '{info_line_5}', '{body_title_1}', '{body_1}', '{body_title_2}', '{body_2}', '{image_file}'),"
+            ));
+        }
+
+        // Remove the last comma
+        if result.ends_with(',') {
+            result.pop();
+        }
+        // Return the result
+        Ok(result)
+    }
+
+    pub async fn get_canon_choicemapping_insert(
+        pool: &sqlx::PgPool,
+        id: Vec<Uuid>,
+    ) -> Result<String> {
+        // Return string of tuple for sql insert
+        // (`QuestionID`, `ChoiceID`, `ChoiceTH`, `ChoiceEN`)
+        let candidates = sqlx::query!(
+            r#"
+                SELECT candidates.id, question_id, choice_order, choice_label_th, choice_label_en
+                FROM candidates
+                WHERE candidates.id = ANY($1)
+            "#,
+            &id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let mut result = "INSERT INTO `choicemapping` (`ID`, `QuestionID`, `ChoiceID`, `ChoiceTH`, `ChoiceEN`) VALUES ".to_string();
+        for candidate in candidates {
+            let id = DbCandidate::get_canon_id(pool, candidate.id).await?;
+            let question_id = DbQuestion::get_canon_id(pool, candidate.question_id).await?;
+            let choice_order = candidate.choice_order;
+            let choice_label_th = candidate.choice_label_th;
+            let choice_label_en = candidate.choice_label_en;
+
+            result.push_str(&format!(
+                "('{id}', '{question_id}', '{choice_order}', '{choice_label_th}', '{choice_label_en}'),"
+            ));
+        }
+
+        // Remove the last comma
+        if result.ends_with(',') {
+            result.pop();
+        }
+        // Return the result
+        Ok(result)
+    }
 }
 
 #[async_trait]

@@ -97,7 +97,7 @@ pub async fn modify_question(
             QueryParam::String,
         );
 
-    if !qb.0.len() == 1 {
+    if qb.0.len() != 1 {
         let mut qb = qb.into_query_builder("UPDATE questions");
         qb.push(" WHERE id = ")
             .push_bind(question_id)

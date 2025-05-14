@@ -93,7 +93,7 @@ pub async fn modify_candidate(
 
     // If there is no field to update, we don't need to run the query
 
-    if !qb.0.len() == 1 {
+    if qb.0.len() != 1 {
         let mut qb = qb.into_query_builder("UPDATE candidates");
         qb.push(" WHERE id = ")
             .push_bind(candidate_id)

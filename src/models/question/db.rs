@@ -48,6 +48,33 @@ impl DbQuestion {
         .map(|row| row.id)
         .collect())
     }
+
+    pub async fn get_canon_id(pool: &sqlx::PgPool, id: Uuid) -> Result<String> {
+        // canon id is EXX-XX-XX where EXX is the election id and XX is the question id
+        // SELECT election_id, question_order, choice_order FROM candidates WHERE id = $1 INNER JOIN questions ON questions.id = candidates.question_id
+
+        let question = sqlx::query!(
+            r#"
+                SELECT election_id, question_order
+                FROM questions
+                WHERE id = $1
+            "#,
+            id
+        )
+        .fetch_optional(pool)
+        .await?;
+        match question {
+            Some(question) => {
+                let election_id = question.election_id.simple().to_string();
+                let question_order = question.question_order;
+                Ok(format!("{election_id}-{question_order}"))
+            }
+            None => Err(Error::EntityNotFound(
+                "Question".to_string(),
+                format!("questions/{id}"),
+            )),
+        }
+    }
 }
 
 #[async_trait]
