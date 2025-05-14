@@ -67,13 +67,72 @@ impl DbQuestion {
             Some(question) => {
                 let election_id = question.election_id.simple().to_string();
                 let question_order = question.question_order;
-                Ok(format!("{election_id}-{question_order}"))
+                Ok(format!("{election_id}-{question_order:02}"))
             }
             None => Err(Error::EntityNotFound(
                 "Question".to_string(),
                 format!("questions/{id}"),
             )),
         }
+    }
+
+    // CREATE TABLE `questionlogic` (
+    //     `ElectionID` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `QuestionID` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `QuestionTH` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `QuestionEN` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `QuestionType` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `FacultyCode` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `StudentYear_Start` int NOT NULL,
+    //     `StudentYear_End` int NOT NULL,
+    //     `StudentProgram` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `Dormitory` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    //     `DayNight` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
+    //   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    pub async fn get_canon_questionlogic_insert(
+        pool: &sqlx::PgPool,
+        id: Vec<Uuid>,
+    ) -> Result<String> {
+        let question = sqlx::query!(
+            r#"
+                SELECT questions.id, election_id, question_order, question_th, question_en, faculty_code, student_year_start, student_year_end, student_program, select_amount, COUNT(candidates.id) as candidate_count
+                FROM questions
+                LEFT JOIN candidates ON questions.id = candidates.question_id
+                WHERE questions.id = ANY($1)
+                GROUP BY questions.id, election_id, question_order, question_th, question_en, faculty_code, student_year_start, student_year_end, student_program, select_amount
+            "#,
+            &id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let mut result = "INSERT INTO `questionlogic` (`ElectionID`, `QuestionID`, `QuestionTH`, `QuestionEN`, `QuestionType`, `FacultyCode`, `StudentYear_Start`, `StudentYear_End`, `StudentProgram`, `Dormitory`, `DayNight`) VALUES ".to_string();
+        for question in question {
+            let election_id = question.election_id.simple().to_string();
+            let question_order = question.question_order;
+            let question_th = question.question_th;
+            let question_en = question.question_en;
+            let faculty_code = question.faculty_code;
+            let student_year_start = question.student_year_start;
+            let student_year_end = question.student_year_end;
+            let student_program = question.student_program;
+            let question_type = if question.select_amount > 1 {
+                format!("SELECT{}", question.select_amount)
+            } else {
+                question
+                    .candidate_count
+                    .map_or_else(|| "0".to_string(), |count| count.to_string())
+            };
+            result.push_str(&format!(
+                "('{election_id}', '{election_id}-{question_order:02}', '{question_th}', '{question_en}', '{question_type}', '{faculty_code}', {student_year_start}, {student_year_end}, '{student_program}', '', '', ''),",
+            ));
+        }
+        // Remove the last comma
+        if result.ends_with(',') {
+            result.pop();
+        }
+        // Return the result
+        Ok(result)
     }
 }
 
