@@ -69,24 +69,12 @@ pub async fn create_candidate(
 
     let mut transaction = pool.begin().await?;
 
-    // Get last choice_order for the question
-    let last_choice_order = query!(
-        r#"
-        SELECT choice_order FROM candidates WHERE question_id = $1 ORDER BY choice_order DESC LIMIT 1
-        "#,
-        candidate.question_id
-    )
-    .fetch_one(&mut *transaction)
-    .await
-    .map(|row| row.choice_order)
-    .unwrap_or(0);
-
     // Create Election
 
     let created_candidate_id = query!(
         r#"
         INSERT INTO candidates (question_id, choice_label_th, choice_label_en, title, info_line_1, info_line_2, info_line_3, info_line_4, info_line_5, body_title_1, body_1, body_title_2, body_2, image_file, choice_order)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, (SELECT COALESCE(MAX(choice_order), 0) + 1 FROM candidates WHERE question_id = $1))
         RETURNING id
         "#,
         candidate.question_id,
@@ -103,7 +91,6 @@ pub async fn create_candidate(
         candidate.body_title_2,
         candidate.body_2,
         "",
-        last_choice_order + 1,
 
     )
     .fetch_one(&mut *transaction)
