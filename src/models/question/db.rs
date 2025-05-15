@@ -117,20 +117,21 @@ impl DbQuestion {
             let student_year_end = question.student_year_end;
             let student_program = question.student_program;
             let question_type = if question.select_amount > 1 {
-                format!("SELECT{}", question.select_amount)
+                format!("Select{}", question.select_amount)
             } else {
                 question
                     .candidate_count
                     .map_or_else(|| "0".to_string(), |count| count.to_string())
             };
             result.push_str(&format!(
-                "('{election_id}', '{election_id}-{question_order:02}', '{question_th}', '{question_en}', '{question_type}', '{faculty_code}', {student_year_start}, {student_year_end}, '{student_program}', '', '', ''),",
+                "\n('{election_id}', '{election_id}-{question_order:02}', '{question_th}', '{question_en}', '{question_type}', '{faculty_code}', {student_year_start}, {student_year_end}, '{student_program}', '', '', ''),",
             ));
         }
         // Remove the last comma
         if result.ends_with(',') {
             result.pop();
         }
+        result.push(';');
         // Return the result
         Ok(result)
     }

@@ -1,15 +1,21 @@
+use std::io::{Cursor, Write};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use cloud_storage::Client;
 use mysk_lib::{
     common::requests::FilterConfig, models::traits::QueryDb, permissions::ActionType, prelude::*,
     query::Queryable,
 };
 use mysk_lib_macros::{BaseQuery, GetById};
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, Postgres, QueryBuilder};
+use sqlx::{prelude::FromRow, query, PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
+use zip::{write::SimpleFileOptions, ZipWriter};
 
-use crate::models::Authorize;
+use crate::models::{
+    candidate::db::DbCandidate, election::db::DbElection, question::db::DbQuestion, Authorize,
+};
 
 use super::requests::{queryable::QueryableProject, sortable::SortableProject};
 
@@ -26,7 +32,7 @@ pub struct DbProject {
 }
 
 impl DbProject {
-    pub async fn get_elections(pool: &sqlx::PgPool, project_id: Uuid) -> Result<Vec<Uuid>> {
+    pub async fn get_elections(pool: &PgPool, project_id: Uuid) -> Result<Vec<Uuid>> {
         Ok(sqlx::query!(
             r#"
             SELECT id
@@ -42,7 +48,7 @@ impl DbProject {
         .collect())
     }
 
-    pub async fn get_election_count(pool: &sqlx::PgPool, project_id: Uuid) -> Result<i64> {
+    pub async fn get_election_count(pool: &PgPool, project_id: Uuid) -> Result<i64> {
         Ok(sqlx::query!(
             r#"
             SELECT COUNT(*)
@@ -57,7 +63,7 @@ impl DbProject {
         .unwrap_or(0))
     }
 
-    pub async fn get_members(pool: &sqlx::PgPool, project_id: Uuid) -> Result<Vec<Uuid>> {
+    pub async fn get_members(pool: &PgPool, project_id: Uuid) -> Result<Vec<Uuid>> {
         Ok(sqlx::query!(
             r#"
             SELECT user_id
@@ -73,7 +79,7 @@ impl DbProject {
         .collect())
     }
 
-    pub async fn get_member_count(pool: &sqlx::PgPool, project_id: Uuid) -> Result<i64> {
+    pub async fn get_member_count(pool: &PgPool, project_id: Uuid) -> Result<i64> {
         Ok(sqlx::query!(
             r#"
             SELECT COUNT(*)
@@ -86,6 +92,82 @@ impl DbProject {
         .await?
         .count
         .unwrap_or(0))
+    }
+
+    pub async fn export_canon_inserts(&self, pool: &PgPool) -> Result<String> {
+        let mut result = String::new();
+
+        let elections = Self::get_elections(pool, self.id).await?;
+
+        let question_ids = query!(
+            r#"
+            SELECT id
+            FROM questions
+            WHERE election_id = ANY($1)
+            "#,
+            &elections
+        )
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.id)
+        .collect::<Vec<_>>();
+
+        let candidate_ids = query!(
+            r#"
+            SELECT id
+            FROM candidates
+            WHERE question_id = ANY($1)
+            "#,
+            &question_ids
+        )
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.id)
+        .collect::<Vec<_>>();
+
+        result.push_str(&DbElection::get_canon_electionmaster_insert(pool, elections).await?);
+
+        result.push_str("\n\n\n");
+
+        result.push_str(&DbQuestion::get_canon_questionlogic_insert(pool, question_ids).await?);
+
+        result.push_str("\n\n\n");
+
+        result.push_str(
+            &DbCandidate::get_canon_choicemapping_insert(pool, candidate_ids.clone()).await?,
+        );
+
+        result.push_str("\n\n\n");
+
+        result.push_str(&DbCandidate::get_canon_candidateinfo_insert(pool, candidate_ids).await?);
+        Ok(result)
+    }
+    // Return byte array of zip file
+    pub async fn export(&self, pool: &PgPool, storage_client: &Client) -> Result<Vec<u8>> {
+        let mut buf = Vec::new();
+
+        let mut zip = ZipWriter::new(Cursor::new(&mut buf));
+        let options =
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+        zip.start_file(
+            format!("{}-{}-{}.sql", self.id, self.name, Utc::now().timestamp()),
+            options,
+        )
+        .map_err(|e| Error::InternalServerError(e.to_string(), "DbProject::export".to_string()))?;
+
+        zip.write(self.export_canon_inserts(pool).await?.as_bytes())
+            .map_err(|e| {
+                Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
+            })?;
+
+        zip.finish().map_err(|e| {
+            Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
+        })?;
+
+        Ok(buf)
     }
 }
 

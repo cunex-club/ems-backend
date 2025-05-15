@@ -101,14 +101,14 @@ impl DbCandidate {
             let info_line_4 = candidate.info_line_4;
             let info_line_5 = candidate.info_line_5;
             let body_title_1 = candidate.body_title_1;
-            let body_1 = candidate.body_1;
+            let body_1 = candidate.body_1.escape_debug().to_string();
             let body_title_2 = candidate.body_title_2;
-            let body_2 = candidate.body_2;
+            let body_2 = candidate.body_2.escape_debug().to_string();
             let image_file_extension = candidate.image_file.split('.').next_back().unwrap_or("");
             let image_file = id.clone() + "." + image_file_extension;
 
             result.push_str(&format!(
-                "('{id}', '{election_id}', '{title}', '{info_line_1}', '{info_line_2}', '{info_line_3}', '{info_line_4}', '{info_line_5}', '{body_title_1}', '{body_1}', '{body_title_2}', '{body_2}', '{image_file}'),"
+                "\n('{id}', '{election_id}', '{title}', '{info_line_1}', '{info_line_2}', '{info_line_3}', '{info_line_4}', '{info_line_5}', '{body_title_1}', '{body_1}', '{body_title_2}', '{body_2}', '{image_file}'),"
             ));
         }
 
@@ -116,6 +116,7 @@ impl DbCandidate {
         if result.ends_with(',') {
             result.pop();
         }
+        result.push(';');
         // Return the result
         Ok(result)
     }
@@ -146,7 +147,7 @@ impl DbCandidate {
             let choice_label_en = candidate.choice_label_en;
 
             result.push_str(&format!(
-                "('{id}', '{question_id}', '{choice_order}', '{choice_label_th}', '{choice_label_en}'),"
+                "\n('{id}', '{question_id}', '{choice_order}', '{choice_label_th}', '{choice_label_en}'),"
             ));
         }
 
@@ -154,6 +155,7 @@ impl DbCandidate {
         if result.ends_with(',') {
             result.pop();
         }
+        result.push(';');
         // Return the result
         Ok(result)
     }

@@ -62,6 +62,48 @@ impl DbElection {
         .count
         .unwrap_or(0))
     }
+
+    pub async fn get_canon_electionmaster_insert(
+        pool: &sqlx::PgPool,
+        id: Vec<Uuid>,
+    ) -> Result<String> {
+        let election = sqlx::query!(
+            r#"
+            SELECT id, label, name_th, name_en, header_th, header_en, detail_th, detail_en
+            FROM elections
+            WHERE id = ANY($1)
+            "#,
+            &id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let mut result = "INSERT INTO `electionmaster` (`ElectionID`, `NickName`, `NameTH`, `NameEN`, `HeaderTH`, `HeaderEN`, `DetailTH`, `DetailEN`) VALUES ".to_string();
+
+        for row in election {
+            let id = row.id.simple().to_string();
+            let label = row.label;
+            let name_th = row.name_th;
+            let name_en = row.name_en;
+            let header_th = row.header_th.escape_debug().to_string();
+            let header_en = row.header_en.escape_debug().to_string();
+            let detail_th = row.detail_th.unwrap_or_default().escape_debug().to_string();
+            let detail_en = row.detail_en.unwrap_or_default().escape_debug().to_string();
+
+            result.push_str(&format!(
+                "\n('{id}', '{label}', '{name_th}', '{name_en}', '{header_th}', '{header_en}', '{detail_th}', '{detail_en}'),"
+            ));
+        }
+
+        // Remove the last comma
+        if result.ends_with(',') {
+            result.pop();
+        }
+
+        result.push(';');
+
+        Ok(result)
+    }
 }
 
 #[async_trait]

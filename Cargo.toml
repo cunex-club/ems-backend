@@ -35,5 +35,6 @@ sqlx = { version = "0.8.3", features = [
     "uuid",
 ] }
 cloud-storage = "0.10"
+zip = "3.0.0"
 mysk-lib = { path = "./dep/mysk-api/mysk-lib" }
 mysk-lib-macros = { path = "./dep/mysk-api/mysk-lib-macros" }
