@@ -163,6 +163,58 @@ impl DbProject {
                 Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
             })?;
 
+        let candidates = query!(
+                r#"
+                SELECT id, image_file
+                FROM candidates
+                WHERE question_id = ANY(SELECT id FROM questions WHERE election_id = ANY(SELECT id FROM elections WHERE project_id = $1))
+                "#,
+                &self.id
+            )
+            .fetch_all(pool)
+            .await?;
+
+        zip.add_directory("images/", options).map_err(|e| {
+            Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
+        })?;
+
+        for candidate in candidates {
+            if candidate.image_file.is_empty() {
+                continue;
+            }
+
+            let extension = candidate.image_file.split('.').next_back().ok_or_else(|| {
+                Error::InternalServerError(
+                    "Invalid image file name".to_string(),
+                    "DbProject::export".to_string(),
+                )
+            })?;
+
+            let file_name = format!(
+                "images/{}.{}",
+                DbCandidate::get_canon_id(pool, candidate.id).await?,
+                extension
+            );
+            zip.start_file(file_name, options).map_err(|e| {
+                Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
+            })?;
+
+            let bytes = storage_client
+                .object()
+                .download("ems-candidate-profile", &candidate.image_file)
+                .await
+                .map_err(|err| {
+                    Error::InternalServerError(
+                        err.to_string(),
+                        format!("DbProject::export: {}", candidate.image_file),
+                    )
+                })?;
+
+            zip.write_all(&bytes).map_err(|e| {
+                Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
+            })?;
+        }
+
         zip.finish().map_err(|e| {
             Error::InternalServerError(e.to_string(), "DbProject::export".to_string())
         })?;
