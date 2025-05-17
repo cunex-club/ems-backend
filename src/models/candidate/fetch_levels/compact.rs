@@ -10,6 +10,7 @@ pub struct CompactCandidate {
     pub choice_label: MultiLangString,
     pub title: String,
     pub image_file: String,
+    pub choice_order: i32,
 }
 
 impl From<DbCandidate> for CompactCandidate {
@@ -30,6 +31,7 @@ impl From<DbCandidate> for CompactCandidate {
             } else {
                 String::new()
             },
+            choice_order: candidate.choice_order,
         }
     }
 }
