@@ -107,6 +107,26 @@ pub async fn modify_question(
     }
 
     if let Some(new_question_order) = election.new_question_order {
+        // Check if the new question order is valid
+        let max_question_order: i32 = query!(
+            r#"
+            SELECT COALESCE(MAX(question_order), 0) as res FROM questions WHERE election_id = $1
+            "#,
+            db_question.election_id
+        )
+        .fetch_one(&mut *transaction)
+        .await?
+        .res
+        .unwrap_or(0);
+
+        // If the new question order is greater than the current maximum, return an error
+        if new_question_order > max_question_order {
+            return Err(Error::InvalidRequest(
+                "New question order is greater than the current maximum question order".to_string(),
+                format!("/questions/{question_id}"),
+            ));
+        }
+
         // Get current question_order
         let current_question_order = query!(
             r#"

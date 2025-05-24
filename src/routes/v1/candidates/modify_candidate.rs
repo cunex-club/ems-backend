@@ -103,6 +103,26 @@ pub async fn modify_candidate(
     }
 
     if let Some(new_choice_order) = candidate.new_choice_order {
+        // get current maximum choice_order
+        let max_choice_order: i32 = query!(
+            r#"
+        SELECT COALESCE(MAX(choice_order), 0) as res FROM candidates WHERE question_id = $1
+        "#,
+            db_candidate.question_id
+        )
+        .fetch_one(&mut *transaction)
+        .await?
+        .res
+        .unwrap_or(0);
+
+        // If the new choice order is greater than the current maximum, return an error
+        if new_choice_order > max_choice_order {
+            return Err(Error::InvalidRequest(
+                "New choice order is greater than the current maximum choice order".to_string(),
+                format!("/candidates/{candidate_id}"),
+            ));
+        }
+
         // Get current choice_order
         let current_choice_order = query!(
             r#"
