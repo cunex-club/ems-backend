@@ -120,9 +120,10 @@ pub async fn modify_question(
         .unwrap_or(0);
 
         // If the new question order is greater than the current maximum, return an error
-        if new_question_order > max_question_order {
+        if new_question_order > max_question_order && new_question_order > 0 {
             return Err(Error::InvalidRequest(
-                "New question order is greater than the current maximum question order".to_string(),
+                "New question order is greater than the current maximum question order and greater than 0"
+                    .to_string(),
                 format!("/questions/{question_id}"),
             ));
         }

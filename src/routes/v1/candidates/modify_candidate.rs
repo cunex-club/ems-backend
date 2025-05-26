@@ -116,9 +116,10 @@ pub async fn modify_candidate(
         .unwrap_or(0);
 
         // If the new choice order is greater than the current maximum, return an error
-        if new_choice_order > max_choice_order {
+        if new_choice_order > max_choice_order && new_choice_order > 0 {
             return Err(Error::InvalidRequest(
-                "New choice order is greater than the current maximum choice order".to_string(),
+                "New choice order is greater than the current maximum choice order and greater than 0"
+                    .to_string(),
                 format!("/candidates/{candidate_id}"),
             ));
         }
