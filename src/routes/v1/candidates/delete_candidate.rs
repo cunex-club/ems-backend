@@ -60,8 +60,9 @@ pub async fn delete_candidate(
 
     // update the choice order
     query!(
-        "UPDATE candidates SET choice_order = choice_order - 1 WHERE choice_order > $1",
-        candidate.choice_order
+        "UPDATE candidates SET choice_order = choice_order - 1 WHERE choice_order > $1 AND question_id = $2",
+        candidate.choice_order,
+        candidate.question_id
     )
     .execute(pool)
     .await?;

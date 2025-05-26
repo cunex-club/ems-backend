@@ -50,8 +50,9 @@ pub async fn delete_question(
 
     // Update the question order
     query!(
-        "UPDATE questions SET question_order = question_order - 1 WHERE question_order > $1",
+        "UPDATE questions SET question_order = question_order - 1 WHERE question_order > $1 AND election_id = $2",
         question.question_order
+        , question.election_id
     )
     .execute(pool)
     .await?;
