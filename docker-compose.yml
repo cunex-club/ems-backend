@@ -1,0 +1,45 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.email=6738249221@student.chula.ac.th
+      - --certificatesresolvers.le.acme.storage=/acme.json
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./acme.json:/acme.json
+
+  frontend:
+    image: ems-frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`cuelection.southeastasia.cloudapp.azure.com`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.tls.certresolver=le"
+
+  backend:
+    image: ems-backend
+    volumes:
+      - /home/azureuser/cunex-ems-449308-89f684faa146.json:/cunex-ems-449308-89f684faa146.json:ro
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`cuelection.southeastasia.cloudapp.azure.com`) && PathPrefix(`/bapi`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.strip-api.stripprefix.prefixes=/bapi"
+      - "traefik.http.routers.backend.middlewares=strip-api"
+      - "traefik.http.routers.backend.tls.certresolver=le"
