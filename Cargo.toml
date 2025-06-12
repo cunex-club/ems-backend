@@ -36,5 +36,6 @@ sqlx = { version = "0.8.3", features = [
 ] }
 cloud-storage = "0.10"
 zip = "3.0.0"
+image = { version = "0.25.6", features = ["jpeg", "png", "gif", "tiff"] }
 mysk-lib = { path = "./dep/mysk-api/mysk-lib" }
 mysk-lib-macros = { path = "./dep/mysk-api/mysk-lib-macros" }

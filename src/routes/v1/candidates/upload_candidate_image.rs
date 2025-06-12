@@ -11,10 +11,12 @@ use actix_web::{
     web::{Bytes, Data, Path},
     HttpRequest, HttpResponse, Responder,
 };
+use image::ImageReader;
 use mysk_lib::{
     common::response::ResponseType, models::traits::GetById, permissions::ActionType, prelude::*,
 };
 use sqlx::query;
+use std::io::Cursor;
 use uuid::Uuid;
 
 #[post("/{id}/upload")]
@@ -49,6 +51,44 @@ pub async fn upload_candidate_image(
         ));
     }
 
+    let image = ImageReader::new(Cursor::new(image))
+        .with_guessed_format()
+        .map_err(|_| {
+            Error::InvalidRequest(
+                "Invalid image format".to_string(),
+                format!("v1/candidates/{candidate_id}/upload"),
+            )
+        })?
+        .decode()
+        .map_err(|_| {
+            Error::InvalidRequest(
+                "Invalid image data".to_string(),
+                format!("v1/candidates/{candidate_id}/upload"),
+            )
+        })?;
+
+    // if the image is not square return an error
+    if image.width() != image.height() {
+        return Err(Error::InvalidRequest(
+            "Image must be square".to_string(),
+            format!("v1/candidates/{candidate_id}/upload"),
+        ));
+    }
+
+    let image = image.resize(300, 300, image::imageops::FilterType::Lanczos3);
+
+    // encode as jpg
+    let mut image_buf = Cursor::new(Vec::new());
+    image
+        .write_to(&mut image_buf, image::ImageFormat::Jpeg)
+        .map_err(|_| {
+            Error::InternalServerError(
+                "Failed to write image".to_string(),
+                format!("v1/candidates/{candidate_id}/upload"),
+            )
+        })?;
+    let image = image_buf.into_inner();
+
     // Check if the candidate exists
     let db_candidate = DbCandidate::get_by_id(pool, candidate_id).await?;
 
@@ -56,21 +96,14 @@ pub async fn upload_candidate_image(
         .authorize(user.id, pool, ActionType::Update)
         .await?;
 
-    let file_extension = content_type.split('/').next_back().ok_or_else(|| {
-        Error::InvalidRequest(
-            "Invalid Content-Type".to_string(),
-            format!("v1/candidates/{candidate_id}/upload"),
-        )
-    })?;
-
     // Upload the image to the storage
     let created_image = match storage_client
         .object()
         .create(
             "ems-candidate-profile",
             image,
-            &format!("{candidate_id}.{file_extension}"),
-            content_type,
+            &format!("{candidate_id}.jpg"),
+            "image/jpeg",
         )
         .await
     {

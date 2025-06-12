@@ -4,8 +4,6 @@ WORKDIR /usr/src/app
 COPY . .
 
 COPY .env .env
-# copy the ssl folder
-# COPY ssl/ ssl/
 
 
 RUN apt-get update && apt-get install libpq5 -y
