@@ -63,6 +63,40 @@ impl DbElection {
         .unwrap_or(0))
     }
 
+    pub async fn get_canon_id(pool: &sqlx::PgPool, id: Uuid) -> Result<String> {
+        // canon id is EXX where XX is the order in which the election was created in the project
+
+        let election = sqlx::query!(
+            r#"
+                SELECT *
+                    FROM (
+                    SELECT
+                        id,
+                        project_id,
+                        ROW_NUMBER() OVER (PARTITION BY project_id ORDER BY created_at) AS local_id
+                    FROM elections
+                    ) sub
+                    WHERE id = $1;
+            "#,
+            id
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        match election {
+            Some(election) => {
+                let local_id = election.local_id.unwrap_or(0);
+
+                let canon_id = format!("E{local_id:02}");
+                Ok(canon_id)
+            }
+            None => Err(Error::EntityNotFound(
+                "Election not found".to_string(),
+                format!("elections/{id}"),
+            )),
+        }
+    }
+
     pub async fn get_canon_electionmaster_insert(
         pool: &sqlx::PgPool,
         id: Vec<Uuid>,
@@ -81,7 +115,7 @@ impl DbElection {
         let mut result = "INSERT INTO `electionmaster` (`ElectionID`, `NickName`, `NameTH`, `NameEN`, `HeaderTH`, `HeaderEN`, `DetailTH`, `DetailEN`) VALUES ".to_string();
 
         for row in election {
-            let id = row.id.simple().to_string();
+            let id = DbElection::get_canon_id(pool, row.id).await?;
             let label = row.label;
             let name_th = row.name_th;
             let name_en = row.name_en;

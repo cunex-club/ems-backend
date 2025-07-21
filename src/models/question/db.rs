@@ -65,7 +65,7 @@ impl DbQuestion {
         .await?;
         match question {
             Some(question) => {
-                let election_id = question.election_id.simple().to_string();
+                let election_id = DbElection::get_canon_id(pool, question.election_id).await?;
                 let question_order = question.question_order;
                 Ok(format!("{election_id}-{question_order:02}"))
             }
@@ -108,7 +108,7 @@ impl DbQuestion {
 
         let mut result = "INSERT INTO `questionlogic` (`ElectionID`, `QuestionID`, `QuestionTH`, `QuestionEN`, `QuestionType`, `FacultyCode`, `StudentYear_Start`, `StudentYear_End`, `StudentProgram`, `Dormitory`, `DayNight`) VALUES ".to_string();
         for question in question {
-            let election_id = question.election_id.simple().to_string();
+            let election_id = DbElection::get_canon_id(pool, question.election_id).await?;
             let question_order = question.question_order;
             let question_th = question.question_th;
             let question_en = question.question_en;

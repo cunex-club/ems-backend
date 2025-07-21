@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use crate::models::{question::db::DbQuestion, Authorize};
+use crate::models::{election::db::DbElection, question::db::DbQuestion, Authorize};
 
 use super::requests::{queryable::QueryableCandidate, sortable::SortableCandidate};
 
@@ -58,7 +58,7 @@ impl DbCandidate {
         .await?;
         match candidate {
             Some(candidate) => {
-                let election_id = candidate.election_id.simple().to_string();
+                let election_id = DbElection::get_canon_id(pool, candidate.election_id).await?;
                 let question_order = candidate.question_order;
                 let choice_order = candidate.choice_order;
 
@@ -93,7 +93,7 @@ impl DbCandidate {
         let mut result = "INSERT INTO `candidateinfo` (`ID`, `ElectionID`, `Title`, `InfoLine1`, `InfoLine2`, `InfoLine3`, `InfoLine4`, `InfoLine5`, `InfoTitle1`, `infoBody1`, `InfoTitle2`, `infoBody2`, `ImageFile`) VALUES ".to_string();
         for candidate in candidates {
             let id = DbCandidate::get_canon_id(pool, candidate.id).await?;
-            let election_id = candidate.election_id.simple().to_string();
+            let election_id = DbElection::get_canon_id(pool, candidate.election_id).await?;
             let title = candidate.title;
             let info_line_1 = candidate.info_line_1;
             let info_line_2 = candidate.info_line_2;
