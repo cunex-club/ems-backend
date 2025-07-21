@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use crate::models::Authorize;
+use crate::models::{election::db::DbElection, Authorize};
 
 use super::requests::{queryable::QueryableQuestion, sortable::SortableQuestion};
 
