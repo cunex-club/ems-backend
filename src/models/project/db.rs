@@ -79,6 +79,22 @@ impl DbProject {
         .collect())
     }
 
+    pub async fn get_invited_members(pool: &PgPool, project_id: Uuid) -> Result<Vec<String>> {
+        Ok(sqlx::query!(
+            r#"
+            SELECT email
+            FROM project_member_queue
+            WHERE project_id = $1
+            "#,
+            project_id
+        )
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.email)
+        .collect())
+    }
+
     pub async fn get_member_count(pool: &PgPool, project_id: Uuid) -> Result<i64> {
         Ok(sqlx::query!(
             r#"

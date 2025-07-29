@@ -16,6 +16,7 @@ pub struct DefaultProject {
     pub name: String,
     pub elections: Vec<Election>,
     pub members: Vec<User>,
+    pub invited_emails: Vec<String>,
     pub owner: User,
 }
 
@@ -29,6 +30,7 @@ impl FetchLevelVariant<DbProject> for DefaultProject {
     ) -> Result<Self> {
         let election_ids = DbProject::get_elections(pool, table.id).await?;
         let member_ids = DbProject::get_members(pool, table.id).await?;
+        let invited_emails = DbProject::get_invited_members(pool, table.id).await?;
 
         Ok(Self {
             id: table.id,
@@ -42,6 +44,7 @@ impl FetchLevelVariant<DbProject> for DefaultProject {
             )
             .await?,
             members: User::get_by_ids(pool, member_ids).await?,
+            invited_emails,
             owner: User::get_by_id(pool, table.owner_id).await?,
         })
     }
