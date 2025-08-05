@@ -2,6 +2,7 @@ use actix_web::web::ServiceConfig;
 
 pub mod add_member;
 pub mod create_project;
+pub mod delete_invited_email;
 pub mod delete_member;
 pub mod delete_project;
 pub mod export_project;
@@ -15,6 +16,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(create_project::create_project);
     cfg.service(modify_project::modify_project);
     cfg.service(delete_project::delete_project);
+    cfg.service(delete_invited_email::delete_invited_email);
     cfg.service(add_member::add_member);
     cfg.service(delete_member::delete_member);
     cfg.service(export_project::export_project);
