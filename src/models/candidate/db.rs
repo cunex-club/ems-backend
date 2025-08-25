@@ -138,16 +138,15 @@ impl DbCandidate {
         .fetch_all(pool)
         .await?;
 
-        let mut result = "INSERT INTO `choicemapping` (`ID`, `QuestionID`, `ChoiceID`, `ChoiceTH`, `ChoiceEN`) VALUES ".to_string();
+        let mut result = "INSERT INTO `choicemapping` (`ChoiceID`, `QuestionID`, `ChoiceTH`, `ChoiceEN`) VALUES ".to_string();
         for candidate in candidates {
             let id = DbCandidate::get_canon_id(pool, candidate.id).await?;
             let question_id = DbQuestion::get_canon_id(pool, candidate.question_id).await?;
-            let choice_order = candidate.choice_order;
             let choice_label_th = candidate.choice_label_th;
             let choice_label_en = candidate.choice_label_en;
 
             result.push_str(&format!(
-                "\n('{id}', '{question_id}', '{choice_order}', '{choice_label_th}', '{choice_label_en}'),"
+                "\n('{id}', '{question_id}', '{choice_label_th}', '{choice_label_en}'),"
             ));
         }
 
