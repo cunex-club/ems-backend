@@ -1,5 +1,6 @@
 use crate::models::{election::db::DbElection, project::Project, question::Question};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use mysk_lib::{
     common::{requests::FetchLevel, string::MultiLangString},
     models::traits::{FetchLevelVariant, TopLevelGetById},
@@ -13,6 +14,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultElection {
     pub id: Uuid,
+    pub created_at: Option<DateTime<Utc>>,
     pub project: Project,
     pub label: String,
     pub name: MultiLangString,
@@ -33,6 +35,7 @@ impl FetchLevelVariant<DbElection> for DefaultElection {
 
         Ok(Self {
             id: table.id,
+            created_at: table.created_at,
             project: Project::get_by_id(
                 pool,
                 table.project_id,

@@ -1,5 +1,6 @@
 use crate::models::election::db::DbElection;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use mysk_lib::{
     common::{requests::FetchLevel, string::MultiLangString},
     models::traits::FetchLevelVariant,
@@ -13,6 +14,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompactElection {
     pub id: Uuid,
+    pub created_at: Option<DateTime<Utc>>,
     pub label: String,
     pub name: MultiLangString,
     pub question_count: i64,
@@ -28,6 +30,7 @@ impl FetchLevelVariant<DbElection> for CompactElection {
     ) -> Result<Self> {
         Ok(Self {
             id: table.id,
+            created_at: table.created_at,
             label: table.label,
             name: MultiLangString {
                 th: table.name_th,
