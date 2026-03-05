@@ -1,5 +1,9 @@
-export CUNEX_KEY_PATH=/Users/smartwatt/Documents/projects/cunex/cu-team_key.pem
+# !/bin/bash
+
+# if the script fails, exit immediately
+set -e
+
 docker build -t ems-backend .
-docker save ems-backend | bzip2 | ssh -i $CUNEX_KEY_PATH azureuser@cuelection.southeastasia.cloudapp.azure.com sudo docker load
-ssh -i "$CUNEX_KEY_PATH" azureuser@cuelection.southeastasia.cloudapp.azure.com \  'sudo docker stop $(sudo docker ps -q)'
-ssh -i "$CUNEX_KEY_PATH" azureuser@cuelection.southeastasia.cloudapp.azure.com \  'sudo docker compose up -d'
+docker save ems-backend | bzip2 | ssh cunex-ems sudo docker load
+ssh cunex-ems \  'sudo docker stop $(sudo docker ps -q)'
+ssh cunex-ems \  'sudo docker compose up -d'

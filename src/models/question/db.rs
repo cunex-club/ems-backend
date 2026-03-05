@@ -124,7 +124,7 @@ impl DbQuestion {
                     .map_or_else(|| "0".to_string(), |count| count.to_string())
             };
             result.push_str(&format!(
-                "\n('{election_id}', '{election_id}-{question_order:02}', '{question_th}', '{question_en}', '{question_type}', '{faculty_code}', {student_year_start}, {student_year_end}, '{student_program}', '', '', ''),",
+                "\n('{election_id}', '{election_id}-{question_order:02}', '{question_th}', '{question_en}', '{question_type}', '{faculty_code}', {student_year_start}, {student_year_end}, '{student_program}', '', ''),",
             ));
         }
         // Remove the last comma

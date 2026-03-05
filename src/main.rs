@@ -91,7 +91,8 @@ async fn main() -> io::Result<()> {
         let cors_middleware = Cors::default()
             .allowed_origin("http://localhost:3000")
             .allowed_origin("http://localhost:8000")
-            .allowed_origin("https://mysk.school")
+            .allowed_origin("https://ems.cunex.club")
+            .allowed_origin("https://cuelection.southeastasia.cloudapp.azure.com")
             .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE", "PUT"])
             .allowed_headers(vec![
                 header::CONTENT_TYPE,
