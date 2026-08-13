@@ -1,6 +1,13 @@
 FROM rust:1.93.1-bookworm as build
 
 WORKDIR /usr/src/app
+
+# SQLx query macros validate SQL at compile time. Dokploy supplies this build
+# argument from its protected app configuration; it is scoped to this builder
+# stage and is not present in the final runtime image.
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
 COPY . .
 
 RUN apt-get update && apt-get install libpq5 -y
