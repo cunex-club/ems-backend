@@ -3,9 +3,6 @@ FROM rust:1.93.1-bookworm as build
 WORKDIR /usr/src/app
 COPY . .
 
-COPY .env .env
-
-
 RUN apt-get update && apt-get install libpq5 -y
 
 RUN cargo build --release

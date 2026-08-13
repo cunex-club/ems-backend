@@ -2,3 +2,5 @@
 target
 ._target
 notes.md
+.env
+.env.*
