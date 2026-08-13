@@ -1,0 +1,23 @@
+[package]
+name = "mysk-lib"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+actix-web.workspace = true
+async-trait.workspace = true
+bs58.workspace = true
+chrono.workspace = true
+futures.workspace = true
+jsonwebtoken.workspace = true
+mysk-lib-macros = { path = "../mysk-lib-macros" }
+rand.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+serde_qs.workspace = true
+serde.workspace = true
+sha2.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+uuid.workspace = true
